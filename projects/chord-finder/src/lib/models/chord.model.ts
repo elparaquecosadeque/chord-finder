@@ -45,3 +45,8 @@ export interface ChordSearchResult {
   positions: ChordsDbPosition[];
   error?: string;
 }
+
+export interface ChordSection {
+  name: string;
+  results: ChordSearchResult[];
+}

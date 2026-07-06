@@ -12,6 +12,7 @@ import { FormsModule } from '@angular/forms';
 import { ChordDiagram } from './components/chord-diagram/chord-diagram';
 import {
   ChordSearchResult,
+  ChordSection,
   ChordsDbPosition,
   Language,
 } from './models/chord.model';
@@ -26,7 +27,10 @@ const COPY = {
     descriptionEnd: 'separated by commas. Sharps and flats are supported:',
     inputLabel: 'Chords',
     exportPng: 'Export PNG',
-    limited: 'Only the first 5 chords are rendered.',
+    bgColor: 'Background',
+    lineColor: 'Diagram color',
+    transparent: 'Transparent',
+    download: 'Download',
     availableTypes: 'Available chord types:',
     resultsLabel: 'Chord results',
     chord: 'Chord',
@@ -46,7 +50,10 @@ const COPY = {
     descriptionEnd: 'separados por coma. Soporta sostenidos y bemoles:',
     inputLabel: 'Acordes',
     exportPng: 'Exportar PNG',
-    limited: 'Solo se renderizan los primeros 5 acordes.',
+    bgColor: 'Fondo',
+    lineColor: 'Color del diagrama',
+    transparent: 'Transparente',
+    download: 'Descargar',
     availableTypes: 'Tipos de acorde disponibles:',
     resultsLabel: 'Resultados de acordes',
     chord: 'Acorde',
@@ -74,26 +81,67 @@ export class ChordFinderComponent {
   readonly text = computed(() => COPY[this.language()]);
   query = 'C';
   results = signal<ChordSearchResult[]>([]);
-  wasLimited = signal(false);
+  sections = signal<ChordSection[]>([]);
+  inputMode = signal<'plain' | 'sections'>('plain');
+  inputError = signal<string | null>(null);
   selectedPositionIndex: Record<string, number> = {};
   supportedSuffixes = computed(() =>
     this.chordService.suffixes().slice(0, 18).join(', '),
   );
+  readonly hasResults = computed(() =>
+    this.inputMode() === 'sections'
+      ? this.sections().length > 0
+      : this.results().length > 0,
+  );
 
-  resultsRow = viewChild.required<ElementRef<HTMLElement>>('resultsRow');
+  resultsRow = viewChild<ElementRef<HTMLElement>>('resultsRow');
+  sectionsContainer = viewChild<ElementRef<HTMLElement>>('sectionsContainer');
+
+  exportPanelOpen = signal(false);
+  exportBgColor = '#ffffff';
+  exportLineColor = '#000000';
+  exportTransparent = false;
 
   constructor(private readonly chordService: ChordService) {
     effect(() => this.runSearch(this.language()));
   }
 
   async exportPng(): Promise<void> {
-    const svgs = Array.from(
-      this.resultsRow().nativeElement.querySelectorAll<SVGSVGElement>(
-        'svg.chord-svg',
-      ),
-    );
-    if (!svgs.length) return;
+    if (this.inputMode() === 'sections') {
+      const container = this.sectionsContainer()?.nativeElement;
+      if (!container) return;
+      for (const [i, section] of this.sections().entries()) {
+        const sectionEl = container.querySelector<HTMLElement>(
+          `[data-section="${i}"]`,
+        );
+        if (!sectionEl) continue;
+        const svgs = Array.from(
+          sectionEl.querySelectorAll<SVGSVGElement>('svg.chord-svg'),
+        );
+        if (!svgs.length) continue;
+        const filename =
+          section.name
+            .trim()
+            .toLowerCase()
+            .replace(/\s+/g, '-')
+            .replace(/[^a-z0-9-]/g, '') || 'section';
+        await this.renderPng(svgs, filename);
+      }
+    } else {
+      const svgs = Array.from(
+        this.resultsRow()?.nativeElement.querySelectorAll<SVGSVGElement>(
+          'svg.chord-svg',
+        ) ?? [],
+      );
+      if (!svgs.length) return;
+      await this.renderPng(svgs, 'chords');
+    }
+  }
 
+  private async renderPng(
+    svgs: SVGSVGElement[],
+    filename: string,
+  ): Promise<void> {
     const padding = 32;
     const gap = 24;
     const width = 240;
@@ -109,8 +157,16 @@ export class ChordFinderComponent {
     if (!ctx) return;
 
     ctx.scale(scale, scale);
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    if (!this.exportTransparent) {
+      ctx.fillStyle = this.exportBgColor;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    const bg = this.exportTransparent ? 'transparent' : this.exportBgColor;
+    const fg = this.exportLineColor;
+    // ponytail: text inside filled dots/barres inverts bg; transparent defaults to white
+    const fgInverse = this.exportTransparent ? '#ffffff' : this.exportBgColor;
 
     for (const [index, svg] of svgs.entries()) {
       const clone = svg.cloneNode(true) as SVGSVGElement;
@@ -119,13 +175,13 @@ export class ChordFinderComponent {
         'afterbegin',
         `<style>
       .chord-svg{font-family:Roboto,Arial,sans-serif;font-weight:400}
-      .card-bg{fill:#fff}.title{font-size:42px;font-weight:400;fill:#000}
-      .grid line{stroke:#000;stroke-width:2.6;stroke-linecap:square}
-      .grid line.nut{stroke-width:7}.barres rect,.dots circle{fill:#000}
-      .barres text,.dots text{fill:#fff;font-size:16px;font-weight:400;dominant-baseline:central;alignment-baseline:middle}
-      .markers text{fill:#000;font-size:30px;font-weight:400}
-      .fret-number{fill:#000;font-size:42px;font-weight:400}
-      .string-labels text{fill:#000;font-size:18px;font-weight:400}
+      .card-bg{fill:${bg}}.title{font-size:42px;font-weight:400;fill:${fg}}
+      .grid line{stroke:${fg};stroke-width:2.6;stroke-linecap:square}
+      .grid line.nut{stroke-width:7}.barres rect,.dots circle{fill:${fg}}
+      .barres text,.dots text{fill:${fgInverse};font-size:16px;font-weight:400;dominant-baseline:central;alignment-baseline:middle}
+      .markers text{fill:${fg};font-size:30px;font-weight:400}
+      .fret-number{fill:${fg};font-size:42px;font-weight:400}
+      .string-labels text{fill:${fg};font-size:18px;font-weight:400}
     </style>`,
       );
 
@@ -149,22 +205,40 @@ export class ChordFinderComponent {
     }
 
     const link = document.createElement('a');
-    link.download = 'chords.png';
+    link.download = `${filename}.png`;
     link.href = canvas.toDataURL('image/png');
     link.click();
   }
 
   runSearch(language: Language = this.language()): void {
-    const { results, wasLimited } = this.chordService.search(
-      this.query,
-      language,
-    );
-    this.results.set(results);
-    this.wasLimited.set(wasLimited);
+    const query = this.query.trim();
 
-    for (const result of results) {
-      if (this.selectedPositionIndex[result.id] === undefined) {
-        this.selectedPositionIndex[result.id] = 0;
+    if (this.chordService.isSectionFormat(query)) {
+      this.inputMode.set('sections');
+      const { sections, error } = this.chordService.searchSections(
+        query,
+        language,
+      );
+      this.inputError.set(error);
+      this.sections.set(sections);
+      this.results.set([]);
+      for (const section of sections) {
+        for (const result of section.results) {
+          if (this.selectedPositionIndex[result.id] === undefined) {
+            this.selectedPositionIndex[result.id] = 0;
+          }
+        }
+      }
+    } else {
+      this.inputMode.set('plain');
+      this.inputError.set(null);
+      const results = this.chordService.search(query, language);
+      this.results.set(results);
+      this.sections.set([]);
+      for (const result of results) {
+        if (this.selectedPositionIndex[result.id] === undefined) {
+          this.selectedPositionIndex[result.id] = 0;
+        }
       }
     }
   }

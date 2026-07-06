@@ -20,22 +20,60 @@
         placeholder="C, F#, C#m, Bb"
         autocomplete="off"
       />
-      <button
-        type="button"
-        (click)="exportPng()"
-        [disabled]="!results().length"
-      >
-        {{ text().exportPng }}
-      </button>
+      <div class="export-wrap">
+        <button
+          type="button"
+          class="export-btn"
+          (click)="exportPanelOpen.set(!exportPanelOpen())"
+          [disabled]="!hasResults()"
+          [class.open]="exportPanelOpen()"
+        >
+          {{ text().exportPng }}
+          <span class="chevron" aria-hidden="true">▾</span>
+        </button>
+        <div class="export-panel" [class.open]="exportPanelOpen()">
+          <div class="export-panel-inner">
+            <div class="export-options">
+              <label class="color-opt">
+                <span>{{ text().bgColor }}</span>
+                <div class="color-row">
+                  <input
+                    type="color"
+                    [(ngModel)]="exportBgColor"
+                    [disabled]="exportTransparent"
+                  />
+                  <label class="check-label">
+                    <input type="checkbox" [(ngModel)]="exportTransparent" />
+                    {{ text().transparent }}
+                  </label>
+                </div>
+              </label>
+              <label class="color-opt">
+                <span>{{ text().lineColor }}</span>
+                <input type="color" [(ngModel)]="exportLineColor" />
+              </label>
+              <button
+                type="button"
+                class="download-btn"
+                (click)="exportPng()"
+                [disabled]="!hasResults()"
+              >
+                {{ text().download }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    @if (wasLimited()) {
-    <p class="warning">{{ text().limited }}</p>
+    @if (inputError()) {
+    <p class="input-error">{{ inputError() }}</p>
     }
 
     <p class="hint">{{ text().availableTypes }} {{ supportedSuffixes() }}...</p>
   </section>
 
+  @if (inputMode() === 'plain') {
   <section
     #resultsRow
     class="results-row"
@@ -51,7 +89,6 @@
           <p class="db-name">{{ text().normalizedAs }} {{ result.dbName }}</p>
           }
         </div>
-
         @if (result.positions.length > 1) {
         <label class="select-label">
           {{ text().position }}
@@ -68,7 +105,6 @@
         </label>
         }
       </header>
-
       @if (result.error) {
       <p class="error-text">{{ result.error }}</p>
       } @else if (selectedPosition(result); as position) {
@@ -83,6 +119,62 @@
     </article>
     }
   </section>
+  } @else if (inputMode() === 'sections') {
+  <div #sectionsContainer class="sections-container">
+    @for (section of sections(); let si = $index; track si) {
+    <section
+      class="section-block"
+      [attr.data-section]="si"
+      [attr.aria-label]="section.name"
+    >
+      <h2 class="section-name">{{ section.name }}</h2>
+      <div class="results-row">
+        @for (result of section.results; track trackByResultId($index, result)) {
+        <article class="result-card" [class.has-error]="result.error">
+          <header class="result-header">
+            <div>
+              <p class="result-label">{{ text().chord }}</p>
+              <h2>{{ result.displayName }}</h2>
+              @if (result.dbName && result.raw !== result.displayName) {
+              <p class="db-name">
+                {{ text().normalizedAs }} {{ result.dbName }}
+              </p>
+              }
+            </div>
+            @if (result.positions.length > 1) {
+            <label class="select-label">
+              {{ text().position }}
+              <select
+                [ngModel]="selectedPositionIndex[result.id]"
+                (ngModelChange)="selectPosition(result.id, $event)"
+              >
+                @for (position of result.positions; track $index) {
+                <option [value]="$index">
+                  {{ $index + 1 }} {{ text().of }} {{ result.positions.length }}
+                </option>
+                }
+              </select>
+            </label>
+            }
+          </header>
+          @if (result.error) {
+          <p class="error-text">{{ result.error }}</p>
+          } @else if (selectedPosition(result); as position) {
+          <div class="svg-wrap">
+            <app-chord-diagram
+              [title]="result.displayName"
+              [position]="position"
+              [positionIndex]="selectedIndex(result.id)"
+            />
+          </div>
+          }
+        </article>
+        }
+      </div>
+    </section>
+    }
+  </div>
+  }
 
   <footer class="app-footer">
     <p>

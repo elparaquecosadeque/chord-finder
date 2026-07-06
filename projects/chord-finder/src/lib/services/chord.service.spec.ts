@@ -8,38 +8,57 @@ describe('ChordService', () => {
   });
 
   it('finds common chords and their positions', () => {
-    const { results, wasLimited } = service.search('C, F#, C#m, Bb, Am7');
+    const results = service.search('C, F#, C#m, Bb, Am7');
 
-    expect(wasLimited).toBe(false);
-    expect(results.map((result) => result.displayName)).toEqual([
+    expect(results.map((r) => r.displayName)).toEqual([
       'C',
       'F#',
       'C#m',
       'Bb',
       'Am7',
     ]);
-    expect(results.every((result) => result.positions.length > 0)).toBe(true);
+    expect(results.every((r) => r.positions.length > 0)).toBe(true);
   });
 
-  it('limits searches to five chords', () => {
-    const { results, wasLimited } = service.search('C, D, E, F, G, A');
+  it('has no chord limit in plain mode', () => {
+    const results = service.search('C, D, E, F, G, A, B');
 
-    expect(wasLimited).toBe(true);
-    expect(results.map((result) => result.displayName)).toEqual([
-      'C',
-      'D',
-      'E',
-      'F',
-      'G',
+    expect(results.map((r) => r.displayName)).toEqual([
+      'C', 'D', 'E', 'F', 'G', 'A', 'B',
     ]);
   });
 
   it('returns a useful error for invalid chord names', () => {
-    const { results } = service.search('H');
-    const { results: spanishResults } = service.search('H', 'es');
+    const results = service.search('H');
+    const spanishResults = service.search('H', 'es');
 
     expect(results[0].positions).toEqual([]);
     expect(results[0].error).toContain('Invalid');
     expect(spanishResults[0].error).toContain('Nombre');
+  });
+
+  it('parses sections format', () => {
+    const { sections, error } = service.searchSections(
+      'verse: C, D; chorus: G, Am',
+    );
+
+    expect(error).toBeNull();
+    expect(sections.length).toBe(2);
+    expect(sections[0].name).toBe('verse');
+    expect(sections[1].name).toBe('chorus');
+    expect(sections[0].results.map((r) => r.displayName)).toEqual(['C', 'D']);
+  });
+
+  it('returns error for too many sections', () => {
+    const input = 'a: C; b: C; c: C; d: C; e: C; f: C; g: C';
+    const { error } = service.searchSections(input);
+
+    expect(error).toContain('6');
+  });
+
+  it('returns error for too many chords in a section', () => {
+    const { error } = service.searchSections('verse: C, D, E, F, G, A, B');
+
+    expect(error).toContain('verse');
   });
 });

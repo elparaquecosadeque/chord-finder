@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import guitarDbJson from '@tombatossals/chords-db/lib/guitar.json';
 import {
   ChordSearchResult,
+  ChordSection,
   ChordsDbInstrument,
   Language,
   ParsedChord,
@@ -13,12 +14,29 @@ const ERROR_COPY = {
     missingRoot: 'Chord root not found in chords-db.',
     missingType: (suffix: string) =>
       `The type "${suffix}" is not available for this chord.`,
+    tooManySections: (max: number) =>
+      `Too many sections — maximum allowed is ${max}.`,
+    tooManyChords: (section: string, max: number) =>
+      `Section "${section}" exceeds the maximum of ${max} chords.`,
+    emptySectionName: 'Section name cannot be empty.',
+    emptySection: (name: string) => `Section "${name}" has no chords.`,
+    noValidSections:
+      'No valid sections found. Expected format: "name: chord1, chord2; name2: chord3".',
   },
   es: {
     invalid: 'Nombre inválido. Prueba C, F#, C#m, Bb, Am7 o Dsus4.',
     missingRoot: 'Raíz no encontrada en chords-db.',
     missingType: (suffix: string) =>
       `El tipo "${suffix}" no existe para este acorde en la base actual.`,
+    tooManySections: (max: number) =>
+      `Demasiadas secciones — el máximo permitido es ${max}.`,
+    tooManyChords: (section: string, max: number) =>
+      `La sección "${section}" supera el máximo de ${max} acordes.`,
+    emptySectionName: 'El nombre de la sección no puede estar vacío.',
+    emptySection: (name: string) =>
+      `La sección "${name}" no tiene acordes.`,
+    noValidSections:
+      'No se encontraron secciones válidas. Formato esperado: "nombre: acorde1, acorde2; nombre2: acorde3".',
   },
 } satisfies Record<
   Language,
@@ -26,12 +44,18 @@ const ERROR_COPY = {
     invalid: string;
     missingRoot: string;
     missingType: (suffix: string) => string;
+    tooManySections: (max: number) => string;
+    tooManyChords: (section: string, max: number) => string;
+    emptySectionName: string;
+    emptySection: (name: string) => string;
+    noValidSections: string;
   }
 >;
 
 @Injectable({ providedIn: 'root' })
 export class ChordService {
-  readonly maxBatchSize = 5;
+  private readonly MAX_SECTIONS = 6;
+  private readonly MAX_CHORDS_PER_SECTION = 6;
 
   private readonly guitarDb = guitarDbJson as ChordsDbInstrument;
 
@@ -87,20 +111,78 @@ export class ChordService {
   search(
     input: string,
     language: Language = 'en',
-  ): { results: ChordSearchResult[]; wasLimited: boolean } {
-    const tokens = input
+  ): ChordSearchResult[] {
+    return input
       .split(',')
       .map((token) => token.trim())
+      .filter(Boolean)
+      .map((token, index) => this.searchSingle(token, index, language));
+  }
+
+  isSectionFormat(input: string): boolean {
+    return input.includes(':');
+  }
+
+  searchSections(
+    input: string,
+    language: Language = 'en',
+  ): { sections: ChordSection[]; error: string | null } {
+    const copy = ERROR_COPY[language];
+
+    const rawSections = input
+      .split(';')
+      .map((s) => s.trim())
       .filter(Boolean);
 
-    const limitedTokens = tokens.slice(0, this.maxBatchSize);
+    if (!rawSections.length) {
+      return { sections: [], error: copy.noValidSections };
+    }
 
-    return {
-      results: limitedTokens.map((token, index) =>
-        this.searchSingle(token, index, language),
-      ),
-      wasLimited: tokens.length > this.maxBatchSize,
-    };
+    if (rawSections.length > this.MAX_SECTIONS) {
+      return { sections: [], error: copy.tooManySections(this.MAX_SECTIONS) };
+    }
+
+    const sections: ChordSection[] = [];
+
+    for (const [si, raw] of rawSections.entries()) {
+      const colonIndex = raw.indexOf(':');
+      if (colonIndex === -1) {
+        return { sections: [], error: copy.noValidSections };
+      }
+
+      const name = raw.slice(0, colonIndex).trim();
+      const chordsStr = raw.slice(colonIndex + 1).trim();
+
+      if (!name) {
+        return { sections: [], error: copy.emptySectionName };
+      }
+
+      const tokens = chordsStr
+        .split(',')
+        .map((t) => t.trim())
+        .filter(Boolean);
+
+      if (!tokens.length) {
+        return { sections: [], error: copy.emptySection(name) };
+      }
+
+      if (tokens.length > this.MAX_CHORDS_PER_SECTION) {
+        return {
+          sections: [],
+          error: copy.tooManyChords(name, this.MAX_CHORDS_PER_SECTION),
+        };
+      }
+
+      sections.push({
+        name,
+        results: tokens.map((token, ci) =>
+          // ponytail: offset by si*10 to keep IDs unique across sections (max 6 chords × 6 sections = 36 < 60)
+          this.searchSingle(token, si * 10 + ci, language),
+        ),
+      });
+    }
+
+    return { sections, error: null };
   }
 
   suffixes(): string[] {
