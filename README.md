@@ -6,6 +6,14 @@ Repository: https://github.com/elparaquecosadeque/chord-generator
 
 Contributions are welcome. This project was built with AI assistance under supervision from the repository owner.
 
+## npm package
+
+The reusable Angular component is published as [@gblp/chord-finder](https://www.npmjs.com/package/@gblp/chord-finder).
+
+```bash
+npm install @gblp/chord-finder
+```
+
 ## Use The App
 
 1. Type up to 5 chords separated by commas.

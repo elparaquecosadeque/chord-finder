@@ -2,6 +2,12 @@
 
 Standalone Angular 22 component for finding guitar chords and rendering SVG chord diagrams.
 
+[View the package on npm](https://www.npmjs.com/package/@gblp/chord-finder)
+
+```bash
+npm install @gblp/chord-finder
+```
+
 ```ts
 import { Component } from "@angular/core";
 import { ChordFinderComponent } from "@gblp/chord-finder";
