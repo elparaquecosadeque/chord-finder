@@ -1,8 +1,9 @@
-# Handoff: Chord Finder — Export Colors + Section Mode
+# Handoff: Chord Finder — Export Colors, Section Mode & Project Rename
 
 **Created:** 2026-07-13  
+**Updated:** 2026-07-13  
 **Branch:** `master` (clean, up to date with origin)  
-**Last commit:** `541ae86` — Merge branch 'master' (CI workflows added remotely)
+**Last commit:** `c78ec00` — Renamed demo app project from `neon-chord-finder` to `demo-chord-finder`
 
 ---
 
@@ -29,6 +30,7 @@ The `@gblp/chord-finder` Angular library (v0.2.0) is an SVG chord diagram render
 - [x] Added `.input-error`, `.sections-container`, `.section-block`, `.section-name` styles to `chord-finder.scss`
 - [x] Fixed `.search-row input` CSS selector to exclude `type="color"` and `type="checkbox"`
 - [x] Added CI workflows: `publish.yml` (manual npm publish) and `release.yml` (auto GitHub release on `v*` tags)
+- [x] Renamed demo app Angular project from `neon-chord-finder` to `demo-chord-finder` across `angular.json`, `package.json`, `package-lock.json`, `README.md`, `.github/workflows/pages.yml`
 
 ### Key Decisions
 
@@ -39,7 +41,7 @@ The `@gblp/chord-finder` Angular library (v0.2.0) is an SVG chord diagram render
 | ID uniqueness via `si * 10 + ci` offset | Max 6×6=36, fits without collision | UUID, string concatenation |
 | Per-section PNG filenames sanitized with `replace(/[^a-z0-9-]/g, '')` | Safe filesystem names from arbitrary user text | Encoding/escaping |
 | `grid-template-rows: 0fr → 1fr` for collapse animation | Pure CSS, no JS height measurement | `max-height` transition, `@angular/animations` |
-| Transparent-bg: skip `fillRect`, inject `fill:transparent` into SVG style | Canvas `toDataURL('image/png')` preserves alpha when no fill is drawn | Separate code path |
+| Rename demo app to `demo-chord-finder` | `neon-chord-finder` was misleading — the name described the visual theme, not the project's role | Keeping the old name |
 
 ---
 
@@ -53,6 +55,12 @@ The `@gblp/chord-finder` Angular library (v0.2.0) is an SVG chord diagram render
 - `projects/chord-finder/src/lib/chord-finder.ts` — New signals (`sections`, `inputMode`, `inputError`, `hasResults`), new `sectionsContainer` viewChild, refactored export, updated `runSearch()`, removed `wasLimited`
 - `projects/chord-finder/src/lib/chord-finder.html` — Export panel markup, sections conditional view with `#sectionsContainer` and `[data-section]` attributes, removed `wasLimited` block
 - `projects/chord-finder/src/lib/chord-finder.scss` — Fixed `input` selector, added export panel styles, section layout styles, `.input-error`
+
+- `angular.json` — Project key and all `buildTarget` references updated from `neon-chord-finder` to `demo-chord-finder`
+- `package.json` — `name` field and all `scripts` references updated; build output now lands in `dist/demo-chord-finder`
+- `package-lock.json` — `name` field updated
+- `README.md` — `dist/` path updated
+- `.github/workflows/pages.yml` — artifact path updated
 
 ### Created (via remote merge)
 
@@ -135,7 +143,7 @@ No new runtime dependencies were added. All features use browser Canvas API, `XM
 - Export panel collapse/expand animation ✅
 - Validation errors with EN/ES i18n ✅
 - CI: GitHub Release on `v*` tag ✅
-- CI: Manual npm publish ✅
+- Demo app project rename (`neon-chord-finder` → `demo-chord-finder`) ✅
 
 ### What's Not Working / Stale
 
@@ -211,4 +219,4 @@ npm run build:gh-pages
 
 ---
 
-*This handoff was generated 2026-07-13. Start a new session and use this document as your initial context.*
+*This handoff was last updated 2026-07-13. Start a new session and use this document as your initial context.*
