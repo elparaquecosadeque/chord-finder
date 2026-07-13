@@ -42,7 +42,7 @@ GitHub Pages build:
 npm run build:gh-pages
 ```
 
-The static app is generated in `dist/neon-chord-finder/browser`.
+The static app is generated in `dist/demo-chord-finder/browser`.
 
 ## Code Map
 

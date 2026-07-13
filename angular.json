@@ -7,7 +7,7 @@
   },
   "newProjectRoot": "projects",
   "projects": {
-    "neon-chord-finder": {
+    "demo-chord-finder": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -87,10 +87,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "neon-chord-finder:build:production"
+              "buildTarget": "demo-chord-finder:build:production"
             },
             "development": {
-              "buildTarget": "neon-chord-finder:build:development"
+              "buildTarget": "demo-chord-finder:build:development"
             }
           },
           "defaultConfiguration": "development"

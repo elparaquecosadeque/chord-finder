@@ -34,6 +34,6 @@ jobs:
 
       - uses: actions/upload-pages-artifact@v4
         with:
-          path: dist/neon-chord-finder/browser
+          path: dist/demo-chord-finder/browser
 
       - uses: actions/deploy-pages@v4

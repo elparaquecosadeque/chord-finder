@@ -1,14 +1,14 @@
 {
-  "name": "neon-chord-finder",
+  "name": "demo-chord-finder",
   "version": "0.1.0",
   "description": "Angular vertical slice for searching guitar chords by name and rendering SVG diagrams from chords-db.",
   "scripts": {
     "ng": "ng",
-    "start": "ng build chord-finder && ng serve neon-chord-finder",
+    "start": "ng build chord-finder && ng serve demo-chord-finder",
     "test": "ng test chord-finder --watch=false",
-    "build": "ng build chord-finder && ng build neon-chord-finder",
+    "build": "ng build chord-finder && ng build demo-chord-finder",
     "build:lib": "ng build chord-finder",
-    "build:gh-pages": "ng build chord-finder && ng build neon-chord-finder --base-href /chord-generator/"
+    "build:gh-pages": "ng build chord-finder && ng build demo-chord-finder --base-href /chord-generator/"
   },
   "private": true,
   "dependencies": {
