@@ -1,6 +1,6 @@
 {
   "name": "@gblp/chord-finder",
-  "version": "0.2.0",
+  "version": "0.3.5",
   "publishConfig": {
     "access": "public"
   },
