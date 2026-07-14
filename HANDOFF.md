@@ -186,7 +186,7 @@ No new runtime dependencies were added. All features use browser Canvas API, `XM
 - Library README: `projects/chord-finder/README.md`
 - npm package: `@gblp/chord-finder` on npmjs.com
 - GitHub repo: https://github.com/elparaquecosadeque/chord-generator
-- chords-db: https://github.com/tombatossals/chords-db
+- chords-db (fork): https://github.com/elparaquecosadeque/chords-db (`@gblp/chords-db`)
 
 ### Commands to Run
 

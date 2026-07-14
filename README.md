@@ -49,7 +49,7 @@ The static app is generated in `dist/demo-chord-finder/browser`.
 - `src/app/app.ts` - root app state, chord search trigger, selected positions, PNG export.
 - `src/app/app.html` - page layout, input, export button, result cards, footer.
 - `src/app/app.scss` - page, form, cards, and footer styles.
-- `src/app/services/chord.service.ts` - parses chord input and reads chord data from `@tombatossals/chords-db`.
+- `src/app/services/chord.service.ts` - parses chord input and reads chord data from `@gblp/chords-db`.
 - `src/app/models/chord.model.ts` - TypeScript shapes for chord data and search results.
 - `src/app/components/chord-diagram/chord-diagram.ts` - computes SVG fret lines, dots, barres, labels, and position code.
 - `src/app/components/chord-diagram/chord-diagram.html` - SVG guitar chord diagram markup.

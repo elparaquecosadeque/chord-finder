@@ -20,7 +20,7 @@ export interface ChordsDbInstrument {
     strings: number;
     fretsOnChord: number;
     name: string;
-    numberOfChords: number;
+    numberOfChords?: number;
   };
   tunings: Record<string, string[]>;
   keys: string[];

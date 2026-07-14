@@ -10,7 +10,7 @@
     "@angular/forms": "^22.0.0"
   },
   "dependencies": {
-    "@tombatossals/chords-db": "0.5.1",
+    "@gblp/chords-db": "1.0.0",
     "tslib": "^2.8.1"
   },
   "sideEffects": false

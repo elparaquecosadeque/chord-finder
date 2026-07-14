@@ -61,4 +61,12 @@ describe('ChordService', () => {
 
     expect(error).toContain('verse');
   });
+
+  it('finds A5 chord — available in @gblp/chords-db but not in the original tombatossals/chords-db', () => {
+    const [result] = service.search('A5');
+
+    expect(result.error).toBeUndefined();
+    expect(result.displayName).toBe('A5');
+    expect(result.positions.length).toBeGreaterThan(0);
+  });
 });
