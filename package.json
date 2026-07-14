@@ -10,6 +10,13 @@
     "build:lib": "ng build chord-finder",
     "build:gh-pages": "ng build chord-finder && ng build demo-chord-finder --base-href /chord-generator/"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/elparaquecosadeque/chord-generator"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "private": true,
   "dependencies": {
     "@angular/common": "22.0.4",
