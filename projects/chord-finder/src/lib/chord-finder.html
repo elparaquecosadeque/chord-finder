@@ -15,8 +15,8 @@
       <input
         id="chordInput"
         type="text"
-        [(ngModel)]="query"
-        (input)="runSearch()"
+        [ngModel]="query()"
+        (ngModelChange)="onQueryChange($event)"
         placeholder="C, F#, C#m, Bb"
         autocomplete="off"
       />

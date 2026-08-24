@@ -79,7 +79,7 @@ const COPY = {
 export class ChordFinderComponent {
   readonly language = input<Language>('en');
   readonly text = computed(() => COPY[this.language()]);
-  query = 'C';
+  query = signal('C');
   results = signal<ChordSearchResult[]>([]);
   sections = signal<ChordSection[]>([]);
   inputMode = signal<'plain' | 'sections'>('plain');
@@ -210,8 +210,13 @@ export class ChordFinderComponent {
     link.click();
   }
 
+  onQueryChange(value: string): void {
+    this.query.set(value);
+    this.runSearch();
+  }
+
   runSearch(language: Language = this.language()): void {
-    const query = this.query.trim();
+    const query = this.query().trim();
 
     if (this.chordService.isSectionFormat(query)) {
       this.inputMode.set('sections');
