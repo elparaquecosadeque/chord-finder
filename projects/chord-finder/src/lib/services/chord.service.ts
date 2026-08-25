@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import guitarDbJson from '@gblp/chords-db/lib/guitar.json';
+import guitarDbJson from '@gblp/chords-db/lib/guitar.json' with { type: 'json' };
 import {
   ChordSearchResult,
   ChordSection,
