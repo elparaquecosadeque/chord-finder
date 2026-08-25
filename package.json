@@ -9,7 +9,7 @@
     "test": "ng test chord-finder --watch=false",
     "build": "ng build chord-finder && ng build demo-chord-finder",
     "build:lib": "ng build chord-finder",
-    "build:gh-pages": "ng build chord-finder && ng build demo-chord-finder --base-href /chord-generator/"
+    "build:gh-pages": "ng build chord-finder && ng build demo-chord-finder --base-href /chord-finder/"
   },
   "repository": {
     "type": "git",
