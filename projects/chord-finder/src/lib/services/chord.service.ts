@@ -99,6 +99,7 @@ export class ChordService {
     min7: 'm7',
     dim: 'dim',
     diminished: 'dim',
+    '°': 'dim',
     aug: 'aug',
     augmented: 'aug',
     sus: 'sus4',
