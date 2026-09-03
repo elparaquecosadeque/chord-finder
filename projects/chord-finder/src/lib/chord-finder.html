@@ -55,10 +55,28 @@
               <button
                 type="button"
                 class="download-btn"
-                (click)="exportPng()"
+                (click)="exportCombined()"
                 [disabled]="!hasResults()"
               >
                 {{ text().download }}
+              </button>
+              @if (inputMode() === 'sections') {
+              <button
+                type="button"
+                class="download-btn download-section-btn"
+                (click)="exportBySection()"
+                [disabled]="!hasResults()"
+              >
+                {{ text().downloadBySection }}
+              </button>
+              }
+              <button
+                type="button"
+                class="download-btn download-individual-btn"
+                (click)="exportIndividual()"
+                [disabled]="!hasResults()"
+              >
+                {{ text().downloadIndividual }}
               </button>
             </div>
           </div>
@@ -108,7 +126,7 @@
       @if (result.error) {
       <p class="error-text">{{ result.error }}</p>
       } @else if (selectedPosition(result); as position) {
-      <div class="svg-wrap">
+      <div class="svg-wrap" [attr.data-result-id]="result.id">
         <app-chord-diagram
           [title]="result.displayName"
           [position]="position"
@@ -160,7 +178,7 @@
           @if (result.error) {
           <p class="error-text">{{ result.error }}</p>
           } @else if (selectedPosition(result); as position) {
-          <div class="svg-wrap">
+          <div class="svg-wrap" [attr.data-result-id]="result.id">
             <app-chord-diagram
               [title]="result.displayName"
               [position]="position"

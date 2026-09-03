@@ -379,6 +379,17 @@ input[type='color'] {
   background: var(--_chords-secondary);
 }
 
+.search-row .download-section-btn {
+  background: transparent;
+  color: var(--_chords-text);
+  border: 2px solid var(--_chords-primary);
+}
+
+.search-row .download-individual-btn {
+  background: var(--_chords-highlight);
+  color: var(--_chords-background);
+}
+
 .sections-container {
   display: flex;
   flex-direction: column;

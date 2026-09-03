@@ -1,6 +1,6 @@
 {
   "name": "demo-chord-finder",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "license": "SEE LICENSE IN LICENSE",
   "description": "Angular vertical slice for searching guitar chords by name and rendering SVG diagrams from chords-db.",
   "scripts": {

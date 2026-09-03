@@ -31,6 +31,8 @@ const COPY = {
     lineColor: 'Diagram color',
     transparent: 'Transparent',
     download: 'Download',
+    downloadBySection: 'Download by section',
+    downloadIndividual: 'Download individually',
     availableTypes: 'Available chord types:',
     resultsLabel: 'Chord results',
     chord: 'Chord',
@@ -54,6 +56,8 @@ const COPY = {
     lineColor: 'Color del diagrama',
     transparent: 'Transparente',
     download: 'Descargar',
+    downloadBySection: 'Descargar por sección',
+    downloadIndividual: 'Descargar individualmente',
     availableTypes: 'Tipos de acorde disponibles:',
     resultsLabel: 'Resultados de acordes',
     chord: 'Acorde',
@@ -106,27 +110,28 @@ export class ChordFinderComponent {
     effect(() => this.runSearch(this.language()));
   }
 
-  async exportPng(): Promise<void> {
+  private static readonly DOWNLOAD_STAGGER_MS = 220;
+
+  /** Combined download: one row (plain) or all sections stacked with labels (sections). */
+  async exportCombined(): Promise<void> {
     if (this.inputMode() === 'sections') {
       const container = this.sectionsContainer()?.nativeElement;
       if (!container) return;
-      for (const [i, section] of this.sections().entries()) {
-        const sectionEl = container.querySelector<HTMLElement>(
-          `[data-section="${i}"]`,
-        );
-        if (!sectionEl) continue;
-        const svgs = Array.from(
-          sectionEl.querySelectorAll<SVGSVGElement>('svg.chord-svg'),
-        );
-        if (!svgs.length) continue;
-        const filename =
-          section.name
-            .trim()
-            .toLowerCase()
-            .replace(/\s+/g, '-')
-            .replace(/[^a-z0-9-]/g, '') || 'section';
-        await this.renderPng(svgs, filename);
-      }
+      const groups = this.sections()
+        .map((section, i) => {
+          const sectionEl = container.querySelector<HTMLElement>(
+            `[data-section="${i}"]`,
+          );
+          const svgs = sectionEl
+            ? Array.from(
+                sectionEl.querySelectorAll<SVGSVGElement>('svg.chord-svg'),
+              )
+            : [];
+          return { label: section.name, svgs };
+        })
+        .filter((group) => group.svgs.length > 0);
+      if (!groups.length) return;
+      await this.renderStackedPng(groups, 'chords');
     } else {
       const svgs = Array.from(
         this.resultsRow()?.nativeElement.querySelectorAll<SVGSVGElement>(
@@ -136,6 +141,145 @@ export class ChordFinderComponent {
       if (!svgs.length) return;
       await this.renderPng(svgs, 'chords');
     }
+  }
+
+  /** Sections mode only: one PNG per section. */
+  async exportBySection(): Promise<void> {
+    const container = this.sectionsContainer()?.nativeElement;
+    if (!container) return;
+    for (const [i, section] of this.sections().entries()) {
+      const sectionEl = container.querySelector<HTMLElement>(
+        `[data-section="${i}"]`,
+      );
+      if (!sectionEl) continue;
+      const svgs = Array.from(
+        sectionEl.querySelectorAll<SVGSVGElement>('svg.chord-svg'),
+      );
+      if (!svgs.length) continue;
+      await this.renderPng(svgs, this.slugify(section.name) || 'section');
+      await this.delay(ChordFinderComponent.DOWNLOAD_STAGGER_MS);
+    }
+  }
+
+  /** One PNG per unique (chord, selected position), deduplicated across sections. */
+  async exportIndividual(): Promise<void> {
+    const sectionsMode = this.inputMode() === 'sections';
+    const flatResults = sectionsMode
+      ? this.sections().flatMap((section) => section.results)
+      : this.results();
+    const root = sectionsMode
+      ? this.sectionsContainer()?.nativeElement
+      : this.resultsRow()?.nativeElement;
+    if (!root) return;
+
+    for (const { result, filename } of this.uniqueChordSelections(
+      flatResults,
+    )) {
+      const svg = root.querySelector<SVGSVGElement>(
+        `[data-result-id="${result.id}"] svg.chord-svg`,
+      );
+      if (!svg) continue;
+      await this.renderPng([svg], filename);
+      await this.delay(ChordFinderComponent.DOWNLOAD_STAGGER_MS);
+    }
+  }
+
+  private uniqueChordSelections(
+    results: ChordSearchResult[],
+  ): { result: ChordSearchResult; filename: string }[] {
+    const firstByKey = new Map<
+      string,
+      { result: ChordSearchResult; positionIndex: number }
+    >();
+    for (const result of results) {
+      if (result.error || !result.positions.length) continue;
+      const positionIndex = this.selectedIndex(result.id);
+      const key = `${result.displayName}::${positionIndex}`;
+      if (!firstByKey.has(key)) {
+        firstByKey.set(key, { result, positionIndex });
+      }
+    }
+
+    const countByName = new Map<string, number>();
+    for (const { result } of firstByKey.values()) {
+      countByName.set(
+        result.displayName,
+        (countByName.get(result.displayName) ?? 0) + 1,
+      );
+    }
+
+    return Array.from(firstByKey.values()).map(
+      ({ result, positionIndex }) => {
+        const slug = this.slugify(result.displayName);
+        const hasVariants = (countByName.get(result.displayName) ?? 0) > 1;
+        return {
+          result,
+          filename: hasVariants ? `${slug}-pos${positionIndex + 1}` : slug,
+        };
+      },
+    );
+  }
+
+  private slugify(value: string): string {
+    return (
+      value
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9-]/g, '') || 'chord'
+    );
+  }
+
+  private delay(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  private diagramStyleTag(bg: string, fg: string, fgInverse: string): string {
+    // ponytail: text inside filled dots/barres inverts bg; transparent defaults to white
+    return `<style>
+      .chord-svg{font-family:Roboto,Arial,sans-serif;font-weight:400}
+      .card-bg{fill:${bg}}.title{font-size:42px;font-weight:400;fill:${fg}}
+      .grid line{stroke:${fg};stroke-width:2.6;stroke-linecap:square}
+      .grid line.nut{stroke-width:7}.barres rect,.dots circle{fill:${fg}}
+      .barres text,.dots text{fill:${fgInverse};font-size:16px;font-weight:400;dominant-baseline:central;alignment-baseline:middle}
+      .markers text{fill:${fg};font-size:30px;font-weight:400}
+      .fret-number{fill:${fg};font-size:42px;font-weight:400}
+      .string-labels text{fill:${fg};font-size:18px;font-weight:400}
+    </style>`;
+  }
+
+  private async drawSvgToCanvas(
+    ctx: CanvasRenderingContext2D,
+    svg: SVGSVGElement,
+    bg: string,
+    fg: string,
+    fgInverse: string,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+  ): Promise<void> {
+    const clone = svg.cloneNode(true) as SVGSVGElement;
+    clone.insertAdjacentHTML('afterbegin', this.diagramStyleTag(bg, fg, fgInverse));
+
+    const url = URL.createObjectURL(
+      new Blob([new XMLSerializer().serializeToString(clone)], {
+        type: 'image/svg+xml',
+      }),
+    );
+    const image = new Image();
+    image.src = url;
+    await image.decode();
+
+    ctx.drawImage(image, x, y, width, height);
+    URL.revokeObjectURL(url);
+  }
+
+  private triggerDownload(canvas: HTMLCanvasElement, filename: string): void {
+    const link = document.createElement('a');
+    link.download = `${filename}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
   }
 
   private async renderPng(
@@ -165,49 +309,86 @@ export class ChordFinderComponent {
 
     const bg = this.exportTransparent ? 'transparent' : this.exportBgColor;
     const fg = this.exportLineColor;
-    // ponytail: text inside filled dots/barres inverts bg; transparent defaults to white
     const fgInverse = this.exportTransparent ? '#ffffff' : this.exportBgColor;
 
     for (const [index, svg] of svgs.entries()) {
-      const clone = svg.cloneNode(true) as SVGSVGElement;
-
-      clone.insertAdjacentHTML(
-        'afterbegin',
-        `<style>
-      .chord-svg{font-family:Roboto,Arial,sans-serif;font-weight:400}
-      .card-bg{fill:${bg}}.title{font-size:42px;font-weight:400;fill:${fg}}
-      .grid line{stroke:${fg};stroke-width:2.6;stroke-linecap:square}
-      .grid line.nut{stroke-width:7}.barres rect,.dots circle{fill:${fg}}
-      .barres text,.dots text{fill:${fgInverse};font-size:16px;font-weight:400;dominant-baseline:central;alignment-baseline:middle}
-      .markers text{fill:${fg};font-size:30px;font-weight:400}
-      .fret-number{fill:${fg};font-size:42px;font-weight:400}
-      .string-labels text{fill:${fg};font-size:18px;font-weight:400}
-    </style>`,
-      );
-
-      const url = URL.createObjectURL(
-        new Blob([new XMLSerializer().serializeToString(clone)], {
-          type: 'image/svg+xml',
-        }),
-      );
-      const image = new Image();
-      image.src = url;
-      await image.decode();
-
-      ctx.drawImage(
-        image,
+      await this.drawSvgToCanvas(
+        ctx,
+        svg,
+        bg,
+        fg,
+        fgInverse,
         padding + index * (width + gap),
         padding,
         width,
         height,
       );
-      URL.revokeObjectURL(url);
     }
 
-    const link = document.createElement('a');
-    link.download = `${filename}.png`;
-    link.href = canvas.toDataURL('image/png');
-    link.click();
+    this.triggerDownload(canvas, filename);
+  }
+
+  private async renderStackedPng(
+    groups: { label: string; svgs: SVGSVGElement[] }[],
+    filename: string,
+  ): Promise<void> {
+    const padding = 32;
+    const gap = 24;
+    const rowGap = 56;
+    const labelHeight = 40;
+    const width = 240;
+    const height = 330;
+    const scale = 2;
+
+    const maxCols = Math.max(...groups.map((group) => group.svgs.length));
+    const rowWidth = maxCols * width + (maxCols - 1) * gap;
+    const totalHeight =
+      groups.length * (labelHeight + height) + (groups.length - 1) * rowGap;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = (padding * 2 + rowWidth) * scale;
+    canvas.height = (padding * 2 + totalHeight) * scale;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    ctx.scale(scale, scale);
+
+    if (!this.exportTransparent) {
+      ctx.fillStyle = this.exportBgColor;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    const bg = this.exportTransparent ? 'transparent' : this.exportBgColor;
+    const fg = this.exportLineColor;
+    const fgInverse = this.exportTransparent ? '#ffffff' : this.exportBgColor;
+
+    let y = padding;
+    for (const group of groups) {
+      ctx.fillStyle = fg;
+      ctx.font = '700 26px Roboto, Arial, sans-serif';
+      ctx.textBaseline = 'top';
+      ctx.fillText(group.label.toUpperCase(), padding, y);
+      y += labelHeight;
+
+      for (const [index, svg] of group.svgs.entries()) {
+        await this.drawSvgToCanvas(
+          ctx,
+          svg,
+          bg,
+          fg,
+          fgInverse,
+          padding + index * (width + gap),
+          y,
+          width,
+          height,
+        );
+      }
+
+      y += height + rowGap;
+    }
+
+    this.triggerDownload(canvas, filename);
   }
 
   onQueryChange(value: string): void {
