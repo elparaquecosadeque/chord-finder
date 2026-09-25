@@ -44,6 +44,8 @@ export interface ChordSearchResult {
   chord?: ChordsDbChord;
   positions: ChordsDbPosition[];
   error?: string;
+  root?: string; // normalized root as typed, e.g. "C#" — set alongside `chord`, used to rebuild a token with a different quality
+  dbRoot?: string; // chords-db key for that root, e.g. "Csharp" — looks up the full quality catalog
 }
 
 export interface ChordSection {

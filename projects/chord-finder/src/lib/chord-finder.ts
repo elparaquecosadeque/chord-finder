@@ -9,16 +9,48 @@ import {
   viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ChordDiagram } from './components/chord-diagram/chord-diagram';
+import { ResultCard } from './components/result-card/result-card';
 import {
   ChordSearchResult,
   ChordSection,
-  ChordsDbPosition,
+  ChordsDbChord,
   Language,
 } from './models/chord.model';
 import { ChordService } from './services/chord.service';
 
-const COPY = {
+export interface ChordFinderCopy {
+  eyebrow: string;
+  title: string;
+  descriptionStart: string;
+  descriptionLimit: string;
+  descriptionEnd: string;
+  inputLabel: string;
+  exportPng: string;
+  bgColor: string;
+  lineColor: string;
+  transparent: string;
+  download: string;
+  downloadBySection: string;
+  downloadIndividual: string;
+  availableTypes: string;
+  resultsLabel: string;
+  chord: string;
+  normalizedAs: string;
+  position: string;
+  of: string;
+  changeQuality: string;
+  applyQuality: string;
+  cancelQuality: string;
+  quality: string;
+  qualityCatalogLabel: string;
+  previousQuality: string;
+  nextQuality: string;
+  openSource: string;
+  contributions: string;
+  assistance: string;
+}
+
+const COPY: Record<Language, ChordFinderCopy> = {
   en: {
     eyebrow: 'Angular · SVG · chords-db',
     title: 'Chord Finder',
@@ -39,6 +71,13 @@ const COPY = {
     normalizedAs: 'Normalized as',
     position: 'Position',
     of: 'of',
+    changeQuality: 'Change',
+    applyQuality: 'Apply',
+    cancelQuality: 'Cancel',
+    quality: 'Quality',
+    qualityCatalogLabel: 'Chord quality catalog',
+    previousQuality: 'Previous quality',
+    nextQuality: 'Next quality',
     openSource: 'Open source project:',
     contributions: 'Contributions are welcome.',
     assistance:
@@ -64,17 +103,24 @@ const COPY = {
     normalizedAs: 'Normalizado como',
     position: 'Posición',
     of: 'de',
+    changeQuality: 'Cambiar',
+    applyQuality: 'Aplicar',
+    cancelQuality: 'Cancelar',
+    quality: 'Calidad',
+    qualityCatalogLabel: 'Catálogo de calidades del acorde',
+    previousQuality: 'Calidad anterior',
+    nextQuality: 'Calidad siguiente',
     openSource: 'Proyecto de código abierto:',
     contributions: 'Las contribuciones son bienvenidas.',
     assistance:
       'Creado con asistencia de IA bajo la supervisión del propietario del repositorio.',
   },
-} as const;
+};
 
 @Component({
   selector: 'the-chords-chord-finder',
   standalone: true,
-  imports: [FormsModule, ChordDiagram],
+  imports: [FormsModule, ResultCard],
   templateUrl: './chord-finder.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './chord-finder.scss',
@@ -89,6 +135,11 @@ export class ChordFinderComponent {
   inputMode = signal<'plain' | 'sections'>('plain');
   inputError = signal<string | null>(null);
   selectedPositionIndex: Record<string, number> = {};
+  // Per-card quality carousel state, keyed by result.id — same plain-object-mutation
+  // pattern as selectedPositionIndex above, never shared across cards even when the
+  // same chord is typed twice.
+  catalogOpen: Record<string, boolean> = {};
+  catalogPreviewIndex: Record<string, number> = {};
   supportedSuffixes = computed(() =>
     this.chordService.suffixes().slice(0, 18).join(', '),
   );
@@ -437,15 +488,68 @@ export class ChordFinderComponent {
     return this.selectedPositionIndex[resultId] ?? 0;
   }
 
-  selectedPosition(result: ChordSearchResult): ChordsDbPosition | null {
-    if (!result.positions.length) return null;
-    return (
-      result.positions[this.selectedPositionIndex[result.id] ?? 0] ??
-      result.positions[0]
-    );
-  }
-
   trackByResultId(_: number, result: ChordSearchResult): string {
     return result.id;
+  }
+
+  // --- Quality catalog (per-card carousel) ---
+
+  qualityCatalog(result: ChordSearchResult): ChordsDbChord[] {
+    return result.dbRoot ? this.chordService.qualityCatalog(result.dbRoot) : [];
+  }
+
+  isCatalogOpen(resultId: string): boolean {
+    return !!this.catalogOpen[resultId];
+  }
+
+  toggleCatalog(result: ChordSearchResult): void {
+    if (this.isCatalogOpen(result.id)) {
+      this.closeCatalog(result.id);
+      return;
+    }
+    const catalog = this.qualityCatalog(result);
+    const currentIndex = catalog.findIndex((c) => c.suffix === result.chord?.suffix);
+    this.catalogPreviewIndex[result.id] = currentIndex >= 0 ? currentIndex : 0;
+    this.catalogOpen[result.id] = true;
+  }
+
+  closeCatalog(resultId: string): void {
+    this.catalogOpen[resultId] = false;
+  }
+
+  catalogPreviewEntry(result: ChordSearchResult): ChordsDbChord | null {
+    const catalog = this.qualityCatalog(result);
+    return catalog[this.catalogPreviewIndex[result.id] ?? 0] ?? null;
+  }
+
+  catalogPreviewIndexOf(resultId: string): number {
+    return this.catalogPreviewIndex[resultId] ?? 0;
+  }
+
+  catalogPreviewName(result: ChordSearchResult): string {
+    const entry = this.catalogPreviewEntry(result);
+    return entry && result.root ? this.chordService.formatChordName(result.root, entry.suffix) : '';
+  }
+
+  stepCatalog(result: ChordSearchResult, delta: number): void {
+    const catalog = this.qualityCatalog(result);
+    if (!catalog.length) return;
+    const current = this.catalogPreviewIndexOf(result.id);
+    this.catalogPreviewIndex[result.id] = Math.max(0, Math.min(catalog.length - 1, current + delta));
+  }
+
+  applyCatalogQuality(result: ChordSearchResult): void {
+    const entry = this.catalogPreviewEntry(result);
+    if (!entry || !result.root) return;
+    const newName = this.chordService.formatChordName(result.root, entry.suffix);
+    const rename = (r: ChordSearchResult): string => (r.id === result.id ? newName : r.raw);
+    const newQuery =
+      this.inputMode() === 'sections'
+        ? this.sections()
+            .map((section) => `${section.name}: ${section.results.map(rename).join(', ')}`)
+            .join('; ')
+        : this.results().map(rename).join(', ');
+    this.closeCatalog(result.id);
+    this.onQueryChange(newQuery);
   }
 }

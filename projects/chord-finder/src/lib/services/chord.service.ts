@@ -3,6 +3,7 @@ import guitarDbJson from '@gblp/chords-db/lib/guitar.json' with { type: 'json' }
 import {
   ChordSearchResult,
   ChordSection,
+  ChordsDbChord,
   ChordsDbInstrument,
   Language,
   ParsedChord,
@@ -239,7 +240,22 @@ export class ChordService {
       dbName: `${chord.key} ${chord.suffix}`,
       chord,
       positions: chord.positions,
+      root: parsed.root,
+      dbRoot: parsed.dbRoot,
     };
+  }
+
+  // Every quality chords-db has for this root, excluding bass-alternate suffixes
+  // (e.g. "/E", "m9/Bb") — those name a different bass note, not a chord quality,
+  // and are out of scope for a quality catalog/carousel.
+  qualityCatalog(dbRoot: string): ChordsDbChord[] {
+    const family = this.guitarDb.chords[dbRoot];
+    if (!family) return [];
+    return family.filter((c) => !c.suffix.includes('/'));
+  }
+
+  formatChordName(root: string, suffix: string): string {
+    return `${root}${this.displaySuffix(suffix)}`;
   }
 
   private parseChordName(raw: string): ParsedChord | null {

@@ -98,43 +98,19 @@
     [attr.aria-label]="text().resultsLabel"
   >
     @for (result of results(); track trackByResultId($index, result)) {
-    <article class="result-card" [class.has-error]="result.error">
-      <header class="result-header">
-        <div>
-          <p class="result-label">{{ text().chord }}</p>
-          <h2>{{ result.displayName }}</h2>
-          @if (result.dbName && result.raw !== result.displayName) {
-          <p class="db-name">{{ text().normalizedAs }} {{ result.dbName }}</p>
-          }
-        </div>
-        @if (result.positions.length > 1) {
-        <label class="select-label">
-          {{ text().position }}
-          <select
-            [ngModel]="selectedPositionIndex[result.id]"
-            (ngModelChange)="selectPosition(result.id, $event)"
-          >
-            @for (position of result.positions; track $index) {
-            <option [value]="$index">
-              {{ $index + 1 }} {{ text().of }} {{ result.positions.length }}
-            </option>
-            }
-          </select>
-        </label>
-        }
-      </header>
-      @if (result.error) {
-      <p class="error-text">{{ result.error }}</p>
-      } @else if (selectedPosition(result); as position) {
-      <div class="svg-wrap" [attr.data-result-id]="result.id">
-        <app-chord-diagram
-          [title]="result.displayName"
-          [position]="position"
-          [positionIndex]="selectedIndex(result.id)"
-        />
-      </div>
-      }
-    </article>
+    <app-result-card
+      [result]="result"
+      [text]="text()"
+      [positionIndex]="selectedIndex(result.id)"
+      [catalog]="qualityCatalog(result)"
+      [catalogOpen]="isCatalogOpen(result.id)"
+      [previewIndex]="catalogPreviewIndexOf(result.id)"
+      [previewName]="catalogPreviewName(result)"
+      (positionChange)="selectPosition(result.id, $event)"
+      (toggleCatalog)="toggleCatalog(result)"
+      (stepCatalog)="stepCatalog(result, $event)"
+      (applyCatalog)="applyCatalogQuality(result)"
+    />
     }
   </section>
   } @else if (inputMode() === 'sections') {
@@ -148,45 +124,19 @@
       <h2 class="section-name">{{ section.name }}</h2>
       <div class="results-row">
         @for (result of section.results; track trackByResultId($index, result)) {
-        <article class="result-card" [class.has-error]="result.error">
-          <header class="result-header">
-            <div>
-              <p class="result-label">{{ text().chord }}</p>
-              <h2>{{ result.displayName }}</h2>
-              @if (result.dbName && result.raw !== result.displayName) {
-              <p class="db-name">
-                {{ text().normalizedAs }} {{ result.dbName }}
-              </p>
-              }
-            </div>
-            @if (result.positions.length > 1) {
-            <label class="select-label">
-              {{ text().position }}
-              <select
-                [ngModel]="selectedPositionIndex[result.id]"
-                (ngModelChange)="selectPosition(result.id, $event)"
-              >
-                @for (position of result.positions; track $index) {
-                <option [value]="$index">
-                  {{ $index + 1 }} {{ text().of }} {{ result.positions.length }}
-                </option>
-                }
-              </select>
-            </label>
-            }
-          </header>
-          @if (result.error) {
-          <p class="error-text">{{ result.error }}</p>
-          } @else if (selectedPosition(result); as position) {
-          <div class="svg-wrap" [attr.data-result-id]="result.id">
-            <app-chord-diagram
-              [title]="result.displayName"
-              [position]="position"
-              [positionIndex]="selectedIndex(result.id)"
-            />
-          </div>
-          }
-        </article>
+        <app-result-card
+          [result]="result"
+          [text]="text()"
+          [positionIndex]="selectedIndex(result.id)"
+          [catalog]="qualityCatalog(result)"
+          [catalogOpen]="isCatalogOpen(result.id)"
+          [previewIndex]="catalogPreviewIndexOf(result.id)"
+          [previewName]="catalogPreviewName(result)"
+          (positionChange)="selectPosition(result.id, $event)"
+          (toggleCatalog)="toggleCatalog(result)"
+          (stepCatalog)="stepCatalog(result, $event)"
+          (applyCatalog)="applyCatalogQuality(result)"
+        />
         }
       </div>
     </section>

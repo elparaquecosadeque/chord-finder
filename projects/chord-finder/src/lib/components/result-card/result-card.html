@@ -1,0 +1,65 @@
+<article class="result-card" [class.has-error]="result().error">
+  <header class="result-header">
+    <div>
+      <p class="result-label">{{ text().chord }}</p>
+      <h2>{{ result().displayName }}</h2>
+      @if (result().dbName && result().raw !== result().displayName) {
+        <p class="db-name">{{ text().normalizedAs }} {{ result().dbName }}</p>
+      }
+    </div>
+    @if (!catalogOpen()) {
+      <div class="result-header-controls">
+        @if (result().positions.length > 1) {
+          <label class="select-label">
+            {{ text().position }}
+            <select [ngModel]="positionIndex()" (ngModelChange)="positionChange.emit($event)">
+              @for (position of result().positions; track $index) {
+                <option [value]="$index">{{ $index + 1 }} {{ text().of }} {{ result().positions.length }}</option>
+              }
+            </select>
+          </label>
+        }
+        @if (!result().error && catalog().length > 0) {
+          <button type="button" class="catalog-toggle" (click)="toggleCatalog.emit()">
+            {{ text().changeQuality }}
+          </button>
+        }
+      </div>
+    }
+  </header>
+
+  @if (result().error) {
+    <p class="error-text">{{ result().error }}</p>
+  } @else if (catalogOpen()) {
+    <div class="catalog-carousel" role="group" [attr.aria-label]="text().qualityCatalogLabel">
+      <div class="catalog-nav">
+        <button
+          type="button"
+          [attr.aria-label]="text().previousQuality"
+          [disabled]="previewIndex() === 0"
+          (click)="stepCatalog.emit(-1)"
+        >‹</button>
+        <span class="catalog-position">{{ text().quality }} {{ previewIndex() + 1 }} {{ text().of }} {{ catalog().length }}</span>
+        <button
+          type="button"
+          [attr.aria-label]="text().nextQuality"
+          [disabled]="previewIndex() === catalog().length - 1"
+          (click)="stepCatalog.emit(1)"
+        >›</button>
+      </div>
+      @if (previewPosition(); as position) {
+        <div class="svg-wrap">
+          <app-chord-diagram [title]="previewName()" [position]="position" [positionIndex]="0" />
+        </div>
+      }
+      <div class="catalog-actions">
+        <button type="button" class="catalog-cancel" (click)="toggleCatalog.emit()">{{ text().cancelQuality }}</button>
+        <button type="button" class="catalog-apply" (click)="applyCatalog.emit()">{{ text().applyQuality }}</button>
+      </div>
+    </div>
+  } @else if (selectedPosition(); as position) {
+    <div class="svg-wrap" [attr.data-result-id]="result().id">
+      <app-chord-diagram [title]="result().displayName" [position]="position" [positionIndex]="positionIndex()" />
+    </div>
+  }
+</article>
