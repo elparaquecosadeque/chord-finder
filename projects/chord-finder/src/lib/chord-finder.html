@@ -20,24 +20,23 @@
         placeholder="C, F#, C#m, Bb"
         autocomplete="off"
       />
-      <div class="toolbar-row">
-        <label class="show-notes-toggle">
-          <input type="checkbox" [checked]="showNotes()" (change)="onShowNotesChange($event)" />
-          {{ text().showNotes }}
-        </label>
-        <div class="export-wrap">
-          <button
-            type="button"
-            class="export-btn"
-            (click)="exportPanelOpen.set(!exportPanelOpen())"
-            [disabled]="!hasResults()"
-            [class.open]="exportPanelOpen()"
-          >
-            {{ text().exportPng }}
-            <span class="chevron" aria-hidden="true">▾</span>
-          </button>
-          <div class="export-panel" [class.open]="exportPanelOpen()">
-            <div class="export-panel-inner">
+      <label class="show-notes-toggle">
+        <input type="checkbox" [checked]="showNotes()" (change)="onShowNotesChange($event)" />
+        {{ text().showNotes }}
+      </label>
+      <div class="export-wrap">
+        <button
+          type="button"
+          class="export-btn"
+          (click)="exportPanelOpen.set(!exportPanelOpen())"
+          [disabled]="!hasResults()"
+          [class.open]="exportPanelOpen()"
+        >
+          {{ text().exportPng }}
+          <span class="chevron" aria-hidden="true">▾</span>
+        </button>
+        <div class="export-panel" [class.open]="exportPanelOpen()">
+          <div class="export-panel-inner">
             <div class="export-options">
               <label class="color-opt">
                 <span>{{ text().bgColor }}</span>
@@ -86,7 +85,6 @@
             </div>
           </div>
         </div>
-      </div>
       </div>
     </div>
 
