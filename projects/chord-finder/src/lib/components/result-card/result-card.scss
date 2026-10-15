@@ -139,6 +139,33 @@ select:focus {
   }
 }
 
+.catalog-favorite {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  color: var(--_chords-muted);
+  background: transparent;
+  border: 1px solid var(--_chords-border);
+  border-radius: 50%;
+  cursor: pointer;
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  &:hover {
+    color: var(--_chords-highlight);
+  }
+
+  &.active {
+    color: var(--_chords-highlight);
+    border-color: var(--_chords-highlight);
+  }
+}
+
 .catalog-position {
   flex: 1;
   text-align: center;

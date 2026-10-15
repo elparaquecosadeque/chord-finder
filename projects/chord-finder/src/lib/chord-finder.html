@@ -106,10 +106,12 @@
       [catalogOpen]="isCatalogOpen(result.id)"
       [previewIndex]="catalogPreviewIndexOf(result.id)"
       [previewName]="catalogPreviewName(result)"
+      [previewIsFavorite]="isPreviewFavorite(result)"
       (positionChange)="selectPosition(result.id, $event)"
       (toggleCatalog)="toggleCatalog(result)"
       (stepCatalog)="stepCatalog(result, $event)"
       (applyCatalog)="applyCatalogQuality(result)"
+      (toggleFavorite)="toggleFavoriteQuality(result)"
     />
     }
   </section>

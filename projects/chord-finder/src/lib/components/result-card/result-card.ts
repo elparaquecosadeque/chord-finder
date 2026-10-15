@@ -25,11 +25,13 @@ export class ResultCard {
   readonly catalogOpen = input(false);
   readonly previewIndex = input(0);
   readonly previewName = input('');
+  readonly previewIsFavorite = input(false);
 
   readonly positionChange = output<string | number>();
   readonly toggleCatalog = output<void>();
   readonly stepCatalog = output<number>();
   readonly applyCatalog = output<void>();
+  readonly toggleFavorite = output<void>();
 
   readonly selectedPosition = computed<ChordsDbPosition | null>(() => {
     const positions = this.result().positions;

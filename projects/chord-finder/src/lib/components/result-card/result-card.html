@@ -46,6 +46,24 @@
           [disabled]="previewIndex() === catalog().length - 1"
           (click)="stepCatalog.emit(1)"
         >›</button>
+        <button
+          type="button"
+          class="catalog-favorite"
+          [class.active]="previewIsFavorite()"
+          [attr.aria-pressed]="previewIsFavorite()"
+          [attr.aria-label]="previewIsFavorite() ? text().removeFavoriteQuality : text().addFavoriteQuality"
+          (click)="toggleFavorite.emit()"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M12 2.5l2.9 6.6 7.2.6-5.5 4.7 1.7 7-6.3-3.9-6.3 3.9 1.7-7-5.5-4.7 7.2-.6z"
+              [attr.fill]="previewIsFavorite() ? 'currentColor' : 'none'"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </button>
       </div>
       @if (previewPosition(); as position) {
         <div class="svg-wrap">

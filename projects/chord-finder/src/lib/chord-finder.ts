@@ -9,6 +9,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { qualityDifficulty } from './chord-difficulty';
 import { ResultCard } from './components/result-card/result-card';
 import {
   ChordSearchResult,
@@ -17,6 +18,7 @@ import {
   Language,
 } from './models/chord.model';
 import { ChordService } from './services/chord.service';
+import { FavoriteQualitiesService } from './services/favorite-qualities.service';
 
 export interface ChordFinderCopy {
   eyebrow: string;
@@ -45,6 +47,8 @@ export interface ChordFinderCopy {
   qualityCatalogLabel: string;
   previousQuality: string;
   nextQuality: string;
+  addFavoriteQuality: string;
+  removeFavoriteQuality: string;
   openSource: string;
   contributions: string;
   assistance: string;
@@ -78,6 +82,8 @@ const COPY: Record<Language, ChordFinderCopy> = {
     qualityCatalogLabel: 'Chord quality catalog',
     previousQuality: 'Previous quality',
     nextQuality: 'Next quality',
+    addFavoriteQuality: 'Mark as favorite',
+    removeFavoriteQuality: 'Remove from favorites',
     openSource: 'Open source project:',
     contributions: 'Contributions are welcome.',
     assistance:
@@ -110,6 +116,8 @@ const COPY: Record<Language, ChordFinderCopy> = {
     qualityCatalogLabel: 'Catálogo de calidades del acorde',
     previousQuality: 'Calidad anterior',
     nextQuality: 'Calidad siguiente',
+    addFavoriteQuality: 'Marcar como favorita',
+    removeFavoriteQuality: 'Quitar de favoritas',
     openSource: 'Proyecto de código abierto:',
     contributions: 'Las contribuciones son bienvenidas.',
     assistance:
@@ -157,7 +165,10 @@ export class ChordFinderComponent {
   exportLineColor = '#000000';
   exportTransparent = false;
 
-  constructor(private readonly chordService: ChordService) {
+  constructor(
+    private readonly chordService: ChordService,
+    private readonly favoriteQualities: FavoriteQualitiesService,
+  ) {
     effect(() => this.runSearch(this.language()));
   }
 
@@ -494,8 +505,18 @@ export class ChordFinderComponent {
 
   // --- Quality catalog (per-card carousel) ---
 
+  // Favorites for this root first (easiest-to-hardest among themselves), then
+  // everything else, also easiest-to-hardest. One ordering pass, not two lists.
   qualityCatalog(result: ChordSearchResult): ChordsDbChord[] {
-    return result.dbRoot ? this.chordService.qualityCatalog(result.dbRoot) : [];
+    const dbRoot = result.dbRoot;
+    if (!dbRoot) return [];
+    const catalog = this.chordService.qualityCatalog(dbRoot);
+    return [...catalog].sort((a, b) => {
+      const favA = this.favoriteQualities.isFavorite(dbRoot, a.suffix);
+      const favB = this.favoriteQualities.isFavorite(dbRoot, b.suffix);
+      if (favA !== favB) return favA ? -1 : 1;
+      return qualityDifficulty(a) - qualityDifficulty(b);
+    });
   }
 
   isCatalogOpen(resultId: string): boolean {
@@ -529,6 +550,23 @@ export class ChordFinderComponent {
   catalogPreviewName(result: ChordSearchResult): string {
     const entry = this.catalogPreviewEntry(result);
     return entry && result.root ? this.chordService.formatChordName(result.root, entry.suffix) : '';
+  }
+
+  // Toggling can re-sort the catalog (favorites float to the front), which would
+  // shift catalogPreviewIndex to point at a DIFFERENT entry if left as-is — re-find
+  // the same quality by suffix afterward so the preview stays on what you just starred.
+  toggleFavoriteQuality(result: ChordSearchResult): void {
+    const entry = this.catalogPreviewEntry(result);
+    if (!entry || !result.dbRoot) return;
+    this.favoriteQualities.toggle(result.dbRoot, entry.suffix);
+    const catalog = this.qualityCatalog(result);
+    const newIndex = catalog.findIndex((c) => c.suffix === entry.suffix);
+    this.catalogPreviewIndex[result.id] = newIndex >= 0 ? newIndex : 0;
+  }
+
+  isPreviewFavorite(result: ChordSearchResult): boolean {
+    const entry = this.catalogPreviewEntry(result);
+    return !!entry && !!result.dbRoot && this.favoriteQualities.isFavorite(result.dbRoot, entry.suffix);
   }
 
   stepCatalog(result: ChordSearchResult, delta: number): void {
