@@ -1,4 +1,5 @@
 <main class="page-shell">
+  <div class="hero-row">
   <section class="hero-card">
     <p class="eyebrow">{{ text().eyebrow }}</p>
     <h1>{{ text().title }}</h1>
@@ -94,6 +95,8 @@
 
     <p class="hint">{{ text().availableTypes }} {{ supportedSuffixes() }}...</p>
   </section>
+  <ng-content select="[chord-finder-extra]" />
+  </div>
 
   @if (inputMode() === 'plain') {
   <section
@@ -101,7 +104,6 @@
     class="results-row"
     [attr.aria-label]="text().resultsLabel"
   >
-    <ng-content select="[chord-finder-extra]" />
     @for (result of results(); track trackByResultId($index, result)) {
     <app-result-card
       [result]="result"

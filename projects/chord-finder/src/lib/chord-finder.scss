@@ -62,6 +62,18 @@
     );
 }
 
+// Lets a host project something (the-chords puts a live circle-of-fifths
+// preview here) beside .hero-card instead of down with the results — still
+// painted on page-shell's own background, so there's no seam between it
+// and the rest of the card. Empty when nothing is projected into
+// [chord-finder-extra], so .hero-card just sits alone as before.
+.hero-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 32px;
+}
+
 .hero-card {
   max-width: 1020px;
   padding: clamp(24px, 4vw, 38px);
