@@ -52,10 +52,22 @@
   pointer-events: none;
 }
 
+// Note names ("F#", "D#") run 2 characters wide, unlike the single-digit
+// finger numbers these slots were sized for — a touch smaller keeps them
+// clear of the dot/barre edge.
+.barres text.note,
+.dots text.note {
+  font-size: 13px;
+}
+
 .markers text {
   fill: #000000;
   font-size: 30px;
   font-weight: 400;
+}
+
+.markers text.note {
+  font-size: 15px;
 }
 
 .fret-number {

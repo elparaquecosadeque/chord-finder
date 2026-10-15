@@ -27,6 +27,7 @@ export interface ChordFinderCopy {
   descriptionLimit: string;
   descriptionEnd: string;
   inputLabel: string;
+  showNotes: string;
   exportPng: string;
   bgColor: string;
   lineColor: string;
@@ -62,6 +63,7 @@ const COPY: Record<Language, ChordFinderCopy> = {
     descriptionLimit: '5 chords',
     descriptionEnd: 'separated by commas. Sharps and flats are supported:',
     inputLabel: 'Chords',
+    showNotes: 'Show notes',
     exportPng: 'Export PNG',
     bgColor: 'Background',
     lineColor: 'Diagram color',
@@ -96,6 +98,7 @@ const COPY: Record<Language, ChordFinderCopy> = {
     descriptionLimit: '5 acordes',
     descriptionEnd: 'separados por coma. Soporta sostenidos y bemoles:',
     inputLabel: 'Acordes',
+    showNotes: 'Mostrar notas',
     exportPng: 'Exportar PNG',
     bgColor: 'Fondo',
     lineColor: 'Color del diagrama',
@@ -138,6 +141,8 @@ export class ChordFinderComponent {
   readonly language = input<Language>('en');
   readonly text = computed(() => COPY[this.language()]);
   query = signal('C');
+  // Global — one switch for every diagram on the page, not per-card.
+  showNotes = signal(false);
   results = signal<ChordSearchResult[]>([]);
   sections = signal<ChordSection[]>([]);
   inputMode = signal<'plain' | 'sections'>('plain');
@@ -304,7 +309,9 @@ export class ChordFinderComponent {
       .grid line{stroke:${fg};stroke-width:2.6;stroke-linecap:square}
       .grid line.nut{stroke-width:7}.barres rect,.dots circle{fill:${fg}}
       .barres text,.dots text{fill:${fgInverse};font-size:16px;font-weight:400;dominant-baseline:central;alignment-baseline:middle}
+      .barres text.note,.dots text.note{font-size:13px}
       .markers text{fill:${fg};font-size:30px;font-weight:400}
+      .markers text.note{font-size:15px}
       .fret-number{fill:${fg};font-size:42px;font-weight:400}
       .string-labels text{fill:${fg};font-size:18px;font-weight:400}
     </style>`;
@@ -451,6 +458,10 @@ export class ChordFinderComponent {
     }
 
     this.triggerDownload(canvas, filename);
+  }
+
+  onShowNotesChange(event: Event): void {
+    this.showNotes.set((event.target as HTMLInputElement).checked);
   }
 
   onQueryChange(value: string): void {

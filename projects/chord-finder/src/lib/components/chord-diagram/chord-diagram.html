@@ -7,7 +7,12 @@
 
   <g class="markers">
     @for (fret of position().frets; track $index) {
-      <text [attr.x]="stringX($index)" y="92" text-anchor="middle">{{ markerFor(fret) }}</text>
+      <text
+        [attr.x]="stringX($index)"
+        y="92"
+        text-anchor="middle"
+        [class.note]="showNotes() && fret === 0"
+      >{{ markerFor(fret, $index) }}</text>
     }
   </g>
 
@@ -43,7 +48,11 @@
         [attr.height]="dotRadius * 2"
         rx="13"
       />
-      @if (barre.finger) {
+      @if (showNotes()) {
+        @for (bn of barre.barreNotes; track bn.x) {
+          <text [attr.x]="bn.x" [attr.y]="barre.labelY" text-anchor="middle" class="note">{{ bn.note }}</text>
+        }
+      } @else if (barre.finger) {
         <text [attr.x]="barre.labelX" [attr.y]="barre.labelY" text-anchor="middle">{{ barre.finger }}</text>
       }
     }
@@ -52,7 +61,9 @@
   <g class="dots">
     @for (dot of visibleDots(); track dot.stringIndex) {
       <circle [attr.cx]="stringX(dot.stringIndex)" [attr.cy]="dotY(dot.fret)" [attr.r]="dotRadius" />
-      @if (dot.finger) {
+      @if (showNotes()) {
+        <text [attr.x]="stringX(dot.stringIndex)" [attr.y]="dotY(dot.fret)" text-anchor="middle" class="note">{{ dot.note }}</text>
+      } @else if (dot.finger) {
         <text [attr.x]="stringX(dot.stringIndex)" [attr.y]="dotY(dot.fret)" text-anchor="middle">{{ dot.finger }}</text>
       }
     }

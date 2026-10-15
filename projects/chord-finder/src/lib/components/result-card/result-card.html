@@ -67,7 +67,7 @@
       </div>
       @if (previewPosition(); as position) {
         <div class="svg-wrap">
-          <app-chord-diagram [title]="previewName()" [position]="position" [positionIndex]="0" />
+          <app-chord-diagram [title]="previewName()" [position]="position" [positionIndex]="0" [showNotes]="showNotes()" />
         </div>
       }
       <div class="catalog-actions">
@@ -77,7 +77,7 @@
     </div>
   } @else if (selectedPosition(); as position) {
     <div class="svg-wrap" [attr.data-result-id]="result().id">
-      <app-chord-diagram [title]="result().displayName" [position]="position" [positionIndex]="positionIndex()" />
+      <app-chord-diagram [title]="result().displayName" [position]="position" [positionIndex]="positionIndex()" [showNotes]="showNotes()" />
     </div>
   }
 </article>

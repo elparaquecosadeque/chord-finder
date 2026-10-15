@@ -203,6 +203,32 @@ h1 {
   font-weight: 900;
 }
 
+.toolbar-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+}
+
+.show-notes-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--_chords-muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+
+  input[type='checkbox'] {
+    accent-color: var(--_chords-primary);
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+  }
+}
+
 .export-wrap {
   display: flex;
   flex-direction: column;

@@ -26,6 +26,7 @@ export class ResultCard {
   readonly previewIndex = input(0);
   readonly previewName = input('');
   readonly previewIsFavorite = input(false);
+  readonly showNotes = input(false);
 
   readonly positionChange = output<string | number>();
   readonly toggleCatalog = output<void>();
