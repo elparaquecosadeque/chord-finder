@@ -20,6 +20,16 @@ import {
 import { ChordService } from './services/chord.service';
 import { FavoriteQualitiesService } from './services/favorite-qualities.service';
 
+const SHOW_NOTES_KEY = 'chord-finder-show-notes';
+
+function loadShowNotes(): boolean {
+  try {
+    return localStorage.getItem(SHOW_NOTES_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
+
 export interface ChordFinderCopy {
   eyebrow: string;
   title: string;
@@ -77,7 +87,7 @@ const COPY: Record<Language, ChordFinderCopy> = {
     normalizedAs: 'Normalized as',
     position: 'Position',
     of: 'of',
-    changeQuality: 'Change',
+    changeQuality: 'Qualities',
     applyQuality: 'Apply',
     cancelQuality: 'Cancel',
     quality: 'Quality',
@@ -112,7 +122,7 @@ const COPY: Record<Language, ChordFinderCopy> = {
     normalizedAs: 'Normalizado como',
     position: 'Posición',
     of: 'de',
-    changeQuality: 'Cambiar',
+    changeQuality: 'Calidades',
     applyQuality: 'Aplicar',
     cancelQuality: 'Cancelar',
     quality: 'Calidad',
@@ -142,7 +152,8 @@ export class ChordFinderComponent {
   readonly text = computed(() => COPY[this.language()]);
   query = signal('C');
   // Global — one switch for every diagram on the page, not per-card.
-  showNotes = signal(false);
+  // Persisted across sessions (see onShowNotesChange below).
+  showNotes = signal(loadShowNotes());
   results = signal<ChordSearchResult[]>([]);
   sections = signal<ChordSection[]>([]);
   inputMode = signal<'plain' | 'sections'>('plain');
@@ -461,7 +472,13 @@ export class ChordFinderComponent {
   }
 
   onShowNotesChange(event: Event): void {
-    this.showNotes.set((event.target as HTMLInputElement).checked);
+    const checked = (event.target as HTMLInputElement).checked;
+    this.showNotes.set(checked);
+    try {
+      localStorage.setItem(SHOW_NOTES_KEY, String(checked));
+    } catch {
+      // localStorage unavailable (private browsing, etc.) — preference just won't persist.
+    }
   }
 
   onQueryChange(value: string): void {
