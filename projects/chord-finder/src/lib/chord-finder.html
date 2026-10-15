@@ -101,6 +101,7 @@
     class="results-row"
     [attr.aria-label]="text().resultsLabel"
   >
+    <ng-content select="[chord-finder-extra]" />
     @for (result of results(); track trackByResultId($index, result)) {
     <app-result-card
       [result]="result"
