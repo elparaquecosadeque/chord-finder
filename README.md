@@ -2,7 +2,7 @@
 
 Angular app for entering guitar chord names, rendering chord diagrams, choosing alternate positions, and exporting the visible diagrams as one PNG.
 
-Repository: https://github.com/elparaquecosadeque/chord-generator
+Repository: https://github.com/elparaquecosadeque/chord-finder
 
 Contributions are welcome. This project was built with AI assistance under supervision from the repository owner.
 
@@ -16,7 +16,7 @@ npm install @gblp/chord-finder
 
 ## Use The App
 
-1. Type up to 5 chords separated by commas.
+1. Type chords separated by commas, or name song sections: `intro: A, Bm; chorus: C, D`.
 2. Use sharps or flats, for example `C, F#, C#m, Bb, Am7`.
 3. If a chord has multiple positions, choose one from the position selector.
 4. Click `Exportar PNG` to download the currently visible chord diagrams as one image.
@@ -46,17 +46,17 @@ The static app is generated in `dist/demo-chord-finder/browser`.
 
 ## Code Map
 
-- `src/app/app.ts` - root app state, chord search trigger, selected positions, PNG export.
-- `src/app/app.html` - page layout, input, export button, result cards, footer.
-- `src/app/app.scss` - page, form, cards, and footer styles.
-- `src/app/services/chord.service.ts` - parses chord input and reads chord data from `@gblp/chords-db`.
-- `src/app/models/chord.model.ts` - TypeScript shapes for chord data and search results.
-- `src/app/components/chord-diagram/chord-diagram.ts` - computes SVG fret lines, dots, barres, labels, and position code.
-- `src/app/components/chord-diagram/chord-diagram.html` - SVG guitar chord diagram markup.
-- `src/app/components/chord-diagram/chord-diagram.scss` - SVG diagram styling.
-- `.github/workflows/pages.yml` - GitHub Pages deployment workflow.
-- `package.json` - npm scripts and dependencies.
+- `projects/chord-finder/` - the publishable library (`@gblp/chord-finder`).
+  - `src/lib/chord-finder.ts` / `.html` / `.scss` - main component: input, sections mode, quality catalog, PNG export.
+  - `src/lib/services/chord.service.ts` - parses chord input and reads chord data from `@gblp/chords-db`.
+  - `src/lib/services/favorite-qualities.service.ts` - favorite qualities persisted in localStorage.
+  - `src/lib/chord-difficulty.ts` - fingering-difficulty score used to sort qualities.
+  - `src/lib/components/chord-diagram/` - SVG chord diagram.
+  - `src/lib/components/result-card/` - one result card (diagram + position selector).
+  - `src/lib/models/chord.model.ts` - TypeScript shapes for chord data and search results.
+- `src/` - demo app that consumes the library.
+- `.github/workflows/` - GitHub Pages deploy, npm publish, GitHub release.
 
 ## Deploy
 
-Push to `master`. GitHub Actions builds the app with `/chord-generator/` as the base href and publishes the browser output to GitHub Pages.
+Push to `master`. GitHub Actions builds the app with `/chord-finder/` as the base href and publishes the browser output to GitHub Pages.

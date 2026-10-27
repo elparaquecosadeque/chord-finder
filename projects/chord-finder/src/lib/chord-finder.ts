@@ -86,8 +86,8 @@ export interface ChordFinderCopy {
 const COPY: Record<Language, ChordFinderCopy> = {
   en: {
     title: 'Chord Finder',
-    descriptionStart: 'Enter up to',
-    descriptionLimit: '5 chords',
+    descriptionStart: 'Enter',
+    descriptionLimit: 'chords',
     descriptionEnd: 'separated by commas. Sharps and flats are supported:',
     inputLabel: 'Chords',
     showNotes: 'Show notes',
@@ -122,8 +122,8 @@ const COPY: Record<Language, ChordFinderCopy> = {
   },
   es: {
     title: 'Buscador de acordes',
-    descriptionStart: 'Escribe hasta',
-    descriptionLimit: '5 acordes',
+    descriptionStart: 'Escribe',
+    descriptionLimit: 'acordes',
     descriptionEnd: 'separados por coma. Soporta sostenidos y bemoles:',
     inputLabel: 'Acordes',
     showNotes: 'Mostrar notas',
