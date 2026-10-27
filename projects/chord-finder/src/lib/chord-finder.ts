@@ -687,9 +687,11 @@ export class ChordFinderComponent {
   }
 
   // Appends to the chosen section, or to the end of the field (plain list, or a
-  // sections query that doesn't parse right now). Then shows the drawn shape's
-  // own position on the new card when chords-db has it.
+  // sections query that doesn't parse right now). The new card shows the drawn
+  // shape: chords-db's own position when it has it, else the shape carried in
+  // the token ("Em[xx200x]"), which ChordService puts first.
   onChordPicked(pick: ChordPick): void {
+    const token = pick.shape ? `${pick.name}[${pick.shape}]` : pick.name;
     const sections = this.sections();
     const toSection = this.inputMode() === 'sections' && sections.length > 0;
     const trimmed = this.query().trim().replace(/[,;]\s*$/, '');
@@ -697,17 +699,17 @@ export class ChordFinderComponent {
       ? sections
         .map((section, i) => {
           const chords = section.results.map((r) => r.raw);
-          if (i === pick.target) chords.push(pick.name);
+          if (i === pick.target) chords.push(token);
           return `${section.name}: ${chords.join(', ')}`;
         })
         .join('; ')
       : trimmed
-        ? `${trimmed}, ${pick.name}`
-        : pick.name;
+        ? `${trimmed}, ${token}`
+        : token;
     this.onQueryChange(newQuery);
 
     const added = toSection ? this.sections()[pick.target]?.results.at(-1) : this.results().at(-1);
-    if (added) this.selectedPositionIndex[added.id] = pick.positionIndex ?? 0;
+    if (added) this.selectedPositionIndex[added.id] = pick.shape ? 0 : (pick.positionIndex ?? 0);
   }
 
   applyCatalogQuality(result: ChordSearchResult): void {

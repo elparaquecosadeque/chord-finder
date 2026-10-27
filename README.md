@@ -20,6 +20,7 @@ npm install @gblp/chord-finder
 2. Use sharps or flats, for example `C, F#, C#m, Bb, Am7`.
 3. If a chord has multiple positions, choose one from the position selector.
    Or click `Draw chord`, mark a shape on the fretboard and add the chord it finds.
+   A shape the database doesn't have is kept in the field as `Em[xx200x]` (low E first, `x` = muted, `a`–`f` = frets 10–15) and shown as position 1; you can type it too.
 4. Click `Exportar PNG` to download the currently visible chord diagrams as one image.
 
 ## Run Locally

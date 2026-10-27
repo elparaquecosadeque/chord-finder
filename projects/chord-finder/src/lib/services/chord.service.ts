@@ -5,6 +5,7 @@ import {
   ChordSection,
   ChordsDbChord,
   ChordsDbInstrument,
+  ChordsDbPosition,
   Language,
   ParsedChord,
 } from '../models/chord.model';
@@ -53,6 +54,22 @@ const ERROR_COPY = {
   }
 >;
 
+// A drawn shape riding on a chord token, in chords-db's own notation (x = muted,
+// a–f = frets 10–15), low E first: "Em[xx200x]". The card shows it as position 1.
+const SHAPE_SUFFIX = /^(.*?)\[([0-9a-fx]{6})\]$/i;
+const LETTER_PC: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+
+/** "E2" → 40. */
+function noteMidi(note: string): number {
+  const shift = note[1] === '#' ? 1 : note[1] === 'b' ? -1 : 0;
+  return (Number(note.at(-1)) + 1) * 12 + LETTER_PC[note[0]] + shift;
+}
+
+/** [-1, -1, 2, 0, 0, -1] → "xx200x". */
+export function shapeCode(frets: number[]): string {
+  return frets.map((fret) => (fret < 0 ? 'x' : fret.toString(16))).join('');
+}
+
 // "C" + "major" → "C", "C" + "minor" → "Cm", "C" + "m7" → "Cm7".
 export function formatChordName(root: string, suffix: string): string {
   if (suffix === 'major') return root;
@@ -66,6 +83,7 @@ export class ChordService {
   readonly MAX_CHORDS_PER_SECTION = 6;
 
   private readonly guitarDb = guitarDbJson as ChordsDbInstrument;
+  private readonly tuning = this.guitarDb.tunings['standard'].map(noteMidi);
 
   private readonly dbRootMap: Record<string, string> = {
     C: 'C',
@@ -203,7 +221,9 @@ export class ChordService {
     index: number,
     language: Language,
   ): ChordSearchResult {
-    const parsed = this.parseChordName(token);
+    const shapeMatch = token.match(SHAPE_SUFFIX);
+    const shape = shapeMatch ? this.shapePosition(shapeMatch[2]) : null;
+    const parsed = this.parseChordName(shapeMatch ? shapeMatch[1] : token);
     const copy = ERROR_COPY[language];
 
     if (!parsed) {
@@ -241,14 +261,29 @@ export class ChordService {
     }
 
     return {
-      id: `${index}-${parsed.dbRoot}-${parsed.suffix}`,
+      id: `${index}-${parsed.dbRoot}-${parsed.suffix}${shape ? `-${shapeMatch![2]}` : ''}`,
       raw: token,
       displayName: parsed.displayName,
       dbName: `${chord.key} ${chord.suffix}`,
       chord,
-      positions: chord.positions,
+      positions: shape ? [shape, ...chord.positions] : chord.positions,
       root: parsed.root,
       dbRoot: parsed.dbRoot,
+    };
+  }
+
+  // Same layout chords-db's generator uses: frets relative to baseFret once the
+  // shape sits above the 4th fret, and one MIDI note per sounding string.
+  private shapePosition(code: string): ChordsDbPosition | null {
+    const frets = [...code.toLowerCase()].map((char) => (char === 'x' ? -1 : parseInt(char, 16)));
+    if (frets.every((fret) => fret < 0)) return null;
+    const fretted = frets.filter((fret) => fret > 0);
+    const baseFret = Math.max(...frets) > 4 ? Math.min(...fretted) : 1;
+    return {
+      frets: frets.map((fret) => (fret > 0 ? fret - baseFret + 1 : fret)),
+      baseFret,
+      barres: [],
+      midi: frets.flatMap((fret, string) => (fret < 0 ? [] : [this.tuning[string] + fret])),
     };
   }
 

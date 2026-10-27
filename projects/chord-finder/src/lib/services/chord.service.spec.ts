@@ -69,4 +69,19 @@ describe('ChordService', () => {
     expect(result.displayName).toBe('A5');
     expect(result.positions.length).toBeGreaterThan(0);
   });
+
+  it('puts a drawn shape from the token first, ahead of the chords-db positions', () => {
+    const [plain] = service.search('Em');
+    const [result] = service.search('Em[xx200x]');
+    expect(result.displayName).toBe('Em');
+    expect(result.error).toBeUndefined();
+    expect(result.positions.length).toBe(plain.positions.length + 1);
+    expect(result.positions[0]).toEqual({ frets: [-1, -1, 2, 0, 0, -1], baseFret: 1, barres: [], midi: [52, 55, 59] });
+  });
+
+  it('stores a shape above the 4th fret relative to its baseFret, hex for frets 10+', () => {
+    const [result] = service.search('Em[xxx987]');
+    expect(result.positions[0]).toMatchObject({ frets: [-1, -1, -1, 3, 2, 1], baseFret: 7 });
+    expect(service.search('Em[xxxccc]')[0].positions[0]).toMatchObject({ frets: [-1, -1, -1, 1, 1, 1], baseFret: 12 });
+  });
 });

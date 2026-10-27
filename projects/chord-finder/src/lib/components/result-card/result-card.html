@@ -3,7 +3,7 @@
     <div>
       <p class="result-label">{{ text().chord }}</p>
       <h2>{{ result().displayName }}</h2>
-      @if (result().dbName && result().raw !== result().displayName) {
+      @if (result().dbName && typedName() !== result().displayName) {
         <p class="db-name">{{ text().normalizedAs }} {{ result().dbName }}</p>
       }
     </div>

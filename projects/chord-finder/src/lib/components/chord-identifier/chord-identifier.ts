@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { FRET_COUNT, NOTE_NAMES, STANDARD_TUNING, degreeNote, identifyChord } from '../../chord-identify';
 import { Language } from '../../models/chord.model';
+import { shapeCode } from '../../services/chord.service';
 
 const LEFT_HANDED_KEY = 'chord-finder-left-handed';
 const SHOW_DEGREES_KEY = 'chord-finder-identifier-degrees';
@@ -29,6 +30,8 @@ export interface ChordPick {
   name: string;
   /** chords-db position with exactly the drawn shape, if there is one. */
   positionIndex: number | null;
+  /** The drawn shape ("xx200x") when chords-db doesn't have it, so the host can keep it. */
+  shape: string | null;
   /** Index into `targets`; 0 when there are none (plain chord list). */
   target: number;
 }
@@ -282,6 +285,7 @@ export class ChordIdentifier {
     this.pick.emit({
       name: reading.addName,
       positionIndex: reading.positionIndex,
+      shape: reading.positionIndex === null ? shapeCode(this.frets()) : null,
       target: Math.max(0, this.target()),
     });
     this.added.set(this.text().added(reading.addName));

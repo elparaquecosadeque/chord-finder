@@ -34,6 +34,9 @@ export class ResultCard {
   readonly applyCatalog = output<void>();
   readonly toggleFavorite = output<void>();
 
+  // What was typed, minus a drawn-shape suffix ("Em[xx200x]" → "Em").
+  readonly typedName = computed(() => this.result().raw.replace(/\[[^\]]*\]$/, ''));
+
   readonly selectedPosition = computed<ChordsDbPosition | null>(() => {
     const positions = this.result().positions;
     return positions[this.positionIndex()] ?? positions[0] ?? null;
