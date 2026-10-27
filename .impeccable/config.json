@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "projects/chord-finder/src/lib/components/chord-identifier/chord-identifier.scss"
+        ],
+        "createdAt": "2026-10-27T19:06:11.405Z",
+        "reason": "Guitar nut on the fretboard, not a card accent; user confirmed"
+      }
+    ]
+  }
+}
