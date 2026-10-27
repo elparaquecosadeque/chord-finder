@@ -473,10 +473,18 @@ input[type='color'] {
   }
 }
 
-// Columns follow the chosen diagram size; a lone narrow panel still shows one.
+// Sections sit side by side while they fit, and wrap to new rows otherwise.
+.compact-groups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 28px;
+}
+
 .compact-group {
   display: grid;
+  align-content: start;
   gap: 6px;
+  min-width: 0;
 }
 
 .compact-section-name {
@@ -488,9 +496,10 @@ input[type='color'] {
   text-transform: uppercase;
 }
 
+// Diagrams at the chosen size; a section wider than the panel wraps inside.
 .compact-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(var(--compact-diagram-size, 120px), 100%), 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 12px;
 }
 
@@ -498,6 +507,8 @@ input[type='color'] {
   display: grid;
   align-content: start;
   gap: 4px;
+  width: var(--compact-diagram-size, 120px);
+  max-width: 100%;
 
   // Smaller than the full page's: two fit side by side in a ~400px panel.
   ::ng-deep .chord-svg {
@@ -515,6 +526,7 @@ input[type='color'] {
   color: var(--_chords-muted);
   font-size: 12px;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 
   button {
     display: grid;
