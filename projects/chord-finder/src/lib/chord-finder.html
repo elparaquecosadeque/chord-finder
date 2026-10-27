@@ -1,7 +1,84 @@
+@if (compact()) {
+<div class="compact-shell">
+  <div class="compact-controls">
+    <input
+      id="chordInput"
+      type="text"
+      [attr.aria-label]="text().inputLabel"
+      [ngModel]="query()"
+      (ngModelChange)="onQueryChange($event)"
+      placeholder="C, F#, C#m, Bb"
+      autocomplete="off"
+    />
+    <button
+      type="button"
+      role="switch"
+      class="compact-switch"
+      [attr.aria-checked]="showNotes()"
+      (click)="setShowNotes(!showNotes())"
+    >
+      <span class="track" aria-hidden="true"></span>
+      {{ text().showNotes }}
+    </button>
+    <label class="compact-size" [title]="text().diagramSize">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="8" height="8" rx="1.5" /></svg>
+      <input
+        type="range"
+        [min]="compactSizeMin"
+        [max]="compactSizeMax"
+        step="10"
+        [attr.aria-label]="text().diagramSize"
+        [value]="compactSize()"
+        (input)="setCompactSize(+$any($event.target).value)"
+      />
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2.5" /></svg>
+    </label>
+  </div>
+  @if (inputError()) {
+  <p class="input-error">{{ inputError() }}</p>
+  }
+  <section class="compact-grid" [attr.aria-label]="text().resultsLabel">
+    @for (result of compactResults(); track trackByResultId($index, result)) {
+    <div class="compact-chord">
+      @if (result.error) {
+      <p class="compact-error">{{ result.raw }}: {{ result.error }}</p>
+      } @else if (result.positions[selectedIndex(result.id)]; as position) {
+      <app-chord-diagram
+        [title]="result.displayName"
+        [position]="position"
+        [positionIndex]="selectedIndex(result.id)"
+        [showNotes]="showNotes()"
+      />
+      @if (result.positions.length > 1) {
+      <div class="compact-positions">
+        <button
+          type="button"
+          [attr.aria-label]="text().previousPosition + ' — ' + result.displayName"
+          [disabled]="selectedIndex(result.id) === 0"
+          (click)="stepPosition(result, -1)"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg>
+        </button>
+        <span>{{ selectedIndex(result.id) + 1 }} / {{ result.positions.length }}</span>
+        <button
+          type="button"
+          [attr.aria-label]="text().nextPosition + ' — ' + result.displayName"
+          [disabled]="selectedIndex(result.id) === result.positions.length - 1"
+          (click)="stepPosition(result, 1)"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
+        </button>
+      </div>
+      }
+      }
+    </div>
+    }
+  </section>
+</div>
+} @else {
 <main class="page-shell">
   <div class="hero-row">
   <section class="hero-card">
-    <p class="eyebrow">{{ text().eyebrow }}</p>
     <h1>{{ text().title }}</h1>
 
     <p class="description">
@@ -92,8 +169,6 @@
     @if (inputError()) {
     <p class="input-error">{{ inputError() }}</p>
     }
-
-    <p class="hint">{{ text().availableTypes }} {{ supportedSuffixes() }}...</p>
   </section>
   <ng-content select="[chord-finder-extra]" />
   </div>
@@ -169,3 +244,4 @@
     <p>{{ text().assistance }}</p>
   </footer>
 </main>
+}

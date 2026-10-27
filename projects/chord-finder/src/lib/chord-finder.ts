@@ -2,14 +2,17 @@ import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
+  booleanAttribute,
   computed,
   effect,
   input,
+  model,
   signal,
   viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { qualityDifficulty } from './chord-difficulty';
+import { ChordDiagram } from './components/chord-diagram/chord-diagram';
 import { ResultCard } from './components/result-card/result-card';
 import {
   ChordSearchResult,
@@ -21,6 +24,20 @@ import { ChordService } from './services/chord.service';
 import { FavoriteQualitiesService } from './services/favorite-qualities.service';
 
 const SHOW_NOTES_KEY = 'chord-finder-show-notes';
+const COMPACT_SIZE_KEY = 'chord-finder-compact-size';
+// Diagram width range (px) for compact mode's size slider.
+export const COMPACT_SIZE_MIN = 90;
+export const COMPACT_SIZE_MAX = 200;
+const COMPACT_SIZE_DEFAULT = 120;
+
+function loadCompactSize(): number {
+  try {
+    const value = Number(localStorage.getItem(COMPACT_SIZE_KEY));
+    return value >= COMPACT_SIZE_MIN && value <= COMPACT_SIZE_MAX ? value : COMPACT_SIZE_DEFAULT;
+  } catch {
+    return COMPACT_SIZE_DEFAULT;
+  }
+}
 
 function loadShowNotes(): boolean {
   try {
@@ -31,13 +48,13 @@ function loadShowNotes(): boolean {
 }
 
 export interface ChordFinderCopy {
-  eyebrow: string;
   title: string;
   descriptionStart: string;
   descriptionLimit: string;
   descriptionEnd: string;
   inputLabel: string;
   showNotes: string;
+  diagramSize: string;
   exportPng: string;
   bgColor: string;
   lineColor: string;
@@ -45,12 +62,13 @@ export interface ChordFinderCopy {
   download: string;
   downloadBySection: string;
   downloadIndividual: string;
-  availableTypes: string;
   resultsLabel: string;
   chord: string;
   normalizedAs: string;
   position: string;
   of: string;
+  previousPosition: string;
+  nextPosition: string;
   changeQuality: string;
   applyQuality: string;
   cancelQuality: string;
@@ -67,13 +85,13 @@ export interface ChordFinderCopy {
 
 const COPY: Record<Language, ChordFinderCopy> = {
   en: {
-    eyebrow: 'Angular · SVG · chords-db',
     title: 'Chord Finder',
     descriptionStart: 'Enter up to',
     descriptionLimit: '5 chords',
     descriptionEnd: 'separated by commas. Sharps and flats are supported:',
     inputLabel: 'Chords',
     showNotes: 'Show notes',
+    diagramSize: 'Diagram size',
     exportPng: 'Export PNG',
     bgColor: 'Background',
     lineColor: 'Diagram color',
@@ -81,12 +99,13 @@ const COPY: Record<Language, ChordFinderCopy> = {
     download: 'Download',
     downloadBySection: 'Download by section',
     downloadIndividual: 'Download individually',
-    availableTypes: 'Available chord types:',
     resultsLabel: 'Chord results',
     chord: 'Chord',
     normalizedAs: 'Normalized as',
     position: 'Position',
     of: 'of',
+    previousPosition: 'Previous position',
+    nextPosition: 'Next position',
     changeQuality: 'Qualities',
     applyQuality: 'Apply',
     cancelQuality: 'Cancel',
@@ -102,13 +121,13 @@ const COPY: Record<Language, ChordFinderCopy> = {
       'Built with AI assistance under supervision from the repository owner.',
   },
   es: {
-    eyebrow: 'Angular · SVG · chords-db',
     title: 'Buscador de acordes',
     descriptionStart: 'Escribe hasta',
     descriptionLimit: '5 acordes',
     descriptionEnd: 'separados por coma. Soporta sostenidos y bemoles:',
     inputLabel: 'Acordes',
     showNotes: 'Mostrar notas',
+    diagramSize: 'Tamaño de los diagramas',
     exportPng: 'Exportar PNG',
     bgColor: 'Fondo',
     lineColor: 'Color del diagrama',
@@ -116,12 +135,13 @@ const COPY: Record<Language, ChordFinderCopy> = {
     download: 'Descargar',
     downloadBySection: 'Descargar por sección',
     downloadIndividual: 'Descargar individualmente',
-    availableTypes: 'Tipos de acorde disponibles:',
     resultsLabel: 'Resultados de acordes',
     chord: 'Acorde',
     normalizedAs: 'Normalizado como',
     position: 'Posición',
     of: 'de',
+    previousPosition: 'Posición anterior',
+    nextPosition: 'Posición siguiente',
     changeQuality: 'Calidades',
     applyQuality: 'Aplicar',
     cancelQuality: 'Cancelar',
@@ -141,16 +161,28 @@ const COPY: Record<Language, ChordFinderCopy> = {
 @Component({
   selector: 'the-chords-chord-finder',
   standalone: true,
-  imports: [FormsModule, ResultCard],
+  imports: [FormsModule, ResultCard, ChordDiagram],
   templateUrl: './chord-finder.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './chord-finder.scss',
-  host: { '[attr.lang]': 'language()' },
+  host: {
+    '[attr.lang]': 'language()',
+    '[class.compact]': 'compact()',
+    '[style.--compact-diagram-size.px]': 'compactSize()',
+  },
 })
 export class ChordFinderComponent {
   readonly language = input<Language>('en');
   readonly text = computed(() => COPY[this.language()]);
-  query = signal('C');
+  // Side-panel variant: just the chord field, the notes switch and a grid of
+  // diagrams with ‹ › position steppers — no hero copy, export, catalog or footer.
+  readonly compact = input(false, { transform: booleanAttribute });
+  // Two-way bindable so a host can restore and persist what was typed.
+  readonly query = model('C');
+  // Compact mode: minimum diagram width; the grid fits as many columns as it can.
+  readonly compactSize = signal(loadCompactSize());
+  readonly compactSizeMin = COMPACT_SIZE_MIN;
+  readonly compactSizeMax = COMPACT_SIZE_MAX;
   // Global — one switch for every diagram on the page, not per-card.
   // Persisted across sessions (see onShowNotesChange below).
   showNotes = signal(loadShowNotes());
@@ -164,8 +196,11 @@ export class ChordFinderComponent {
   // same chord is typed twice.
   catalogOpen: Record<string, boolean> = {};
   catalogPreviewIndex: Record<string, number> = {};
-  supportedSuffixes = computed(() =>
-    this.chordService.suffixes().slice(0, 18).join(', '),
+  // Compact mode has no section headings: every chord in one grid.
+  readonly compactResults = computed(() =>
+    this.inputMode() === 'sections'
+      ? this.sections().flatMap((section) => section.results)
+      : this.results(),
   );
   readonly hasResults = computed(() =>
     this.inputMode() === 'sections'
@@ -202,8 +237,8 @@ export class ChordFinderComponent {
           );
           const svgs = sectionEl
             ? Array.from(
-                sectionEl.querySelectorAll<SVGSVGElement>('svg.chord-svg'),
-              )
+              sectionEl.querySelectorAll<SVGSVGElement>('svg.chord-svg'),
+            )
             : [];
           return { label: section.name, svgs };
         })
@@ -472,7 +507,19 @@ export class ChordFinderComponent {
   }
 
   onShowNotesChange(event: Event): void {
-    const checked = (event.target as HTMLInputElement).checked;
+    this.setShowNotes((event.target as HTMLInputElement).checked);
+  }
+
+  setCompactSize(value: number): void {
+    this.compactSize.set(value);
+    try {
+      localStorage.setItem(COMPACT_SIZE_KEY, String(value));
+    } catch {
+      // localStorage unavailable — preference just won't persist.
+    }
+  }
+
+  setShowNotes(checked: boolean): void {
     this.showNotes.set(checked);
     try {
       localStorage.setItem(SHOW_NOTES_KEY, String(checked));
@@ -521,6 +568,11 @@ export class ChordFinderComponent {
 
   selectPosition(resultId: string, value: string | number): void {
     this.selectedPositionIndex[resultId] = Number(value);
+  }
+
+  stepPosition(result: ChordSearchResult, delta: number): void {
+    const last = result.positions.length - 1;
+    this.selectedPositionIndex[result.id] = Math.max(0, Math.min(last, this.selectedIndex(result.id) + delta));
   }
 
   selectedIndex(resultId: string): number {
@@ -612,8 +664,8 @@ export class ChordFinderComponent {
     const newQuery =
       this.inputMode() === 'sections'
         ? this.sections()
-            .map((section) => `${section.name}: ${section.results.map(rename).join(', ')}`)
-            .join('; ')
+          .map((section) => `${section.name}: ${section.results.map(rename).join(', ')}`)
+          .join('; ')
         : this.results().map(rename).join(', ');
     this.closeCatalog(result.id);
     this.onQueryChange(newQuery);
