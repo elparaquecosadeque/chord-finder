@@ -130,6 +130,10 @@ export class ChordIdentifier {
 
   constructor(private readonly host: ElementRef<HTMLElement>) {}
 
+  noteName(string: number, fret: number): string {
+    return NOTE_NAMES[(STANDARD_TUNING[string] + fret) % 12];
+  }
+
   label(string: number, fret: number): string {
     const pc = (STANDARD_TUNING[string] + fret) % 12;
     return this.reading()?.degreeOf[pc]?.replace(/^1$/, 'R') ?? NOTE_NAMES[pc];

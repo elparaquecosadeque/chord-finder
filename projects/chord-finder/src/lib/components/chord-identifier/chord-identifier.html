@@ -50,6 +50,8 @@
     >
       @if (frets()[s] === f) {
       <span class="dot" [class.root]="isRoot(s, f)">{{ label(s, f) }}</span>
+      } @else {
+      <span class="ghost">{{ noteName(s, f) }}</span>
       }
     </button>
     }

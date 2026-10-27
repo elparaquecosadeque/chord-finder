@@ -216,14 +216,38 @@ button:focus-visible {
     background: color-mix(in srgb, var(--_primary) 5%, transparent);
   }
 
-  // Ghost of the dot you'd place.
-  &:hover:not([aria-pressed='true'])::after {
-    content: '';
-    width: 26px;
-    height: 26px;
-    border: 2px solid color-mix(in srgb, var(--_secondary) 55%, transparent);
-    border-radius: 50%;
+  &:hover .ghost,
+  &:focus-visible .ghost {
+    transform: scale(1.18);
+    border-color: var(--_secondary);
+    background: color-mix(in srgb, var(--_secondary) 22%, var(--_surface));
+    color: var(--_text);
   }
+
+  &:hover .dot {
+    transform: scale(1.1);
+  }
+}
+
+// Every note on the board, faint until you place one.
+.ghost {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid color-mix(in srgb, var(--_muted) 24%, transparent);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--_muted) 9%, var(--_surface));
+  color: color-mix(in srgb, var(--_muted) 72%, transparent);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  transition:
+    transform 0.16s var(--_ease-out),
+    border-color 0.16s ease-out,
+    background-color 0.16s ease-out,
+    color 0.16s ease-out;
 }
 
 .dot,
@@ -238,6 +262,7 @@ button:focus-visible {
   font-weight: 800;
   letter-spacing: -0.02em;
   animation: place 0.22s var(--_ease-out);
+  transition: transform 0.16s var(--_ease-out);
 }
 
 .dot {
@@ -501,5 +526,16 @@ button:focus-visible {
   .dot,
   .ring {
     animation: none;
+  }
+
+  .ghost,
+  .dot {
+    transition: none;
+  }
+
+  .fret-cell:hover .ghost,
+  .fret-cell:hover .dot,
+  .fret-cell:focus-visible .ghost {
+    transform: none;
   }
 }
