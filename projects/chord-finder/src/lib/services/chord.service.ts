@@ -53,10 +53,17 @@ const ERROR_COPY = {
   }
 >;
 
+// "C" + "major" → "C", "C" + "minor" → "Cm", "C" + "m7" → "Cm7".
+export function formatChordName(root: string, suffix: string): string {
+  if (suffix === 'major') return root;
+  if (suffix === 'minor') return `${root}m`;
+  return `${root}${suffix}`;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ChordService {
   private readonly MAX_SECTIONS = 6;
-  private readonly MAX_CHORDS_PER_SECTION = 6;
+  readonly MAX_CHORDS_PER_SECTION = 6;
 
   private readonly guitarDb = guitarDbJson as ChordsDbInstrument;
 
@@ -255,7 +262,7 @@ export class ChordService {
   }
 
   formatChordName(root: string, suffix: string): string {
-    return `${root}${this.displaySuffix(suffix)}`;
+    return formatChordName(root, suffix);
   }
 
   private parseChordName(raw: string): ParsedChord | null {
@@ -282,7 +289,7 @@ export class ChordService {
       raw,
       root,
       dbRoot,
-      displayName: `${root}${this.displaySuffix(suffix)}`,
+      displayName: formatChordName(root, suffix),
       suffix,
     };
   }
@@ -308,11 +315,5 @@ export class ChordService {
     }
 
     return null;
-  }
-
-  private displaySuffix(suffix: string): string {
-    if (suffix === 'major') return '';
-    if (suffix === 'minor') return 'm';
-    return suffix;
   }
 }

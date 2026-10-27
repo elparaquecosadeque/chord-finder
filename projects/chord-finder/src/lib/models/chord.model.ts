@@ -15,6 +15,11 @@ export interface ChordsDbChord {
   positions: ChordsDbPosition[];
 }
 
+export interface ChordsDbFormula {
+  formula: string[];
+  optional: string[];
+}
+
 export interface ChordsDbInstrument {
   main: {
     strings: number;
@@ -25,6 +30,8 @@ export interface ChordsDbInstrument {
   tunings: Record<string, string[]>;
   keys: string[];
   suffixes: string[];
+  // Scale degrees per suffix (slash suffixes excluded), e.g. m7 → 1 b3 5 b7.
+  formulas: Record<string, ChordsDbFormula>;
   chords: Record<string, ChordsDbChord[]>;
 }
 

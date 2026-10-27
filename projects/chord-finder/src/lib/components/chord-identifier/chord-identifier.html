@@ -1,0 +1,144 @@
+<div class="toolbar">
+  <button
+    type="button"
+    role="switch"
+    class="switch"
+    [attr.aria-checked]="leftHanded()"
+    (click)="setLeftHanded(!leftHanded())"
+  >
+    <span class="track" aria-hidden="true"></span>
+    {{ text().leftHanded }}
+  </button>
+  <button type="button" class="ghost-btn" [disabled]="sounding() === 0" (click)="clear()">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3" /></svg>
+    {{ text().clear }}
+  </button>
+</div>
+
+<div class="board-scroll">
+  <div class="board" role="group" [attr.aria-label]="text().board" (keydown)="onBoardKey($event)">
+    @for (s of strings; track s) {
+    <span class="string-name" aria-hidden="true">{{ stringNames[s] }}</span>
+    <button
+      type="button"
+      class="cell open-cell"
+      [style.--gauge.px]="1 + (5 - s) * 0.45"
+      [attr.data-cell]="s + '-0'"
+      [attr.tabindex]="focusString() === s && focusFret() === 0 ? 0 : -1"
+      [attr.aria-label]="cellLabel(s, 0)"
+      (focus)="focusString.set(s); focusFret.set(0)"
+      (click)="toggleOpen(s)"
+    >
+      @if (frets()[s] === 0) {
+      <span class="ring" [class.root]="isRoot(s, 0)">{{ label(s, 0) }}</span>
+      } @else if (frets()[s] === -1) {
+      <svg class="mute" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17" /></svg>
+      }
+    </button>
+    @for (f of fretNumbers; track f) {
+    <button
+      type="button"
+      class="cell fret-cell"
+      [class.inlay]="inlays.has(f)"
+      [style.--gauge.px]="1 + (5 - s) * 0.45"
+      [attr.data-cell]="s + '-' + f"
+      [attr.tabindex]="focusString() === s && focusFret() === f ? 0 : -1"
+      [attr.aria-label]="cellLabel(s, f)"
+      [attr.aria-pressed]="frets()[s] === f"
+      (focus)="focusString.set(s); focusFret.set(f)"
+      (click)="toggleFret(s, f)"
+    >
+      @if (frets()[s] === f) {
+      <span class="dot" [class.root]="isRoot(s, f)">{{ label(s, f) }}</span>
+      }
+    </button>
+    }
+    }
+    <span></span>
+    <span></span>
+    @for (f of fretNumbers; track f) {
+    <span class="fret-number" [class.inlay]="inlays.has(f)" aria-hidden="true">{{ f }}</span>
+    }
+  </div>
+</div>
+
+<div class="readout" aria-live="polite">
+  @if (sounding() < 2) {
+  <p class="prompt">{{ text().prompt }}</p>
+  } @else if (reading(); as r) {
+  <div class="reading">
+    <p class="chord-name">{{ r.name }}</p>
+    <ol class="formula">
+      @for (d of r.degrees; track d) {
+      <li>{{ d === '1' ? 'R' : d }}</li>
+      }
+      @for (d of r.omitted; track d) {
+      <li class="omitted" [attr.title]="text().omitted">({{ d }})</li>
+      }
+    </ol>
+  </div>
+  <p class="match" [class.exact]="r.positionIndex !== null">
+    @if (r.positionIndex !== null) {
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+    {{ text().exact(r.positionIndex + 1) }}
+    } @else {
+    {{ text().custom }}
+    }
+  </p>
+  @if (r.bassDropped) {
+  <p class="bass-dropped">{{ text().bassDropped(r.addName) }}</p>
+  }
+  @if (readings().length > 1) {
+  <div class="alternatives">
+    <span class="caption">{{ text().alternatives }}</span>
+    <div class="chips">
+      @for (alt of readings().slice(0, 8); let i = $index; track alt.name) {
+      <button type="button" class="chip" [attr.aria-pressed]="i === readingIndex()" (click)="readingIndex.set(i)">
+        {{ alt.name }}
+      </button>
+      }
+    </div>
+  </div>
+  }
+  } @else {
+  <p class="no-match">{{ text().noMatch }}</p>
+  <p class="notes">{{ noteNames().join(' · ') }}</p>
+  }
+</div>
+
+<div class="add-row">
+  @if (targets().length) {
+  <div class="targets" role="radiogroup" [attr.aria-label]="text().section">
+    <span class="caption">{{ text().section }}</span>
+    <div class="chips">
+      @for (t of targets(); let i = $index; track i) {
+      <button
+        type="button"
+        role="radio"
+        class="chip"
+        [attr.aria-checked]="i === target()"
+        [disabled]="t.full"
+        (click)="target.set(i)"
+      >
+        {{ t.name }}
+        @if (t.full) {
+        <span class="full">· {{ text().sectionFull }}</span>
+        }
+      </button>
+      }
+    </div>
+  </div>
+  }
+  <div class="add-actions">
+    <button type="button" class="add-btn" [disabled]="!canAdd()" (click)="add()">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+      {{ text().add }}
+    </button>
+    <p class="added" role="status">
+      @if (added()) {
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+      {{ added() }}
+      }
+    </p>
+  </div>
+</div>

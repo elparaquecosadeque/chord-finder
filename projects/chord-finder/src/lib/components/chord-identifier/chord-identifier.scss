@@ -1,0 +1,505 @@
+// Same --chords-* contract as ChordFinderComponent, so the identifier also
+// themes correctly when a host uses it on its own.
+:host {
+  --_text: var(--chords-text, #f8f8ff);
+  --_muted: var(--chords-muted, #dedbff);
+  --_surface: var(--chords-surface, #000000);
+  --_primary: var(--chords-primary, #00fff0);
+  --_secondary: var(--chords-secondary, #ff2bd6);
+  --_highlight: var(--chords-highlight, #ffee00);
+  --_on-primary: var(--chords-on-primary, #000000);
+  --_ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  display: grid;
+  gap: 20px;
+  color: var(--_text);
+  font-family: inherit;
+}
+
+:host *,
+:host *::before,
+:host *::after {
+  box-sizing: border-box;
+}
+
+svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.caption {
+  color: var(--_secondary);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+// ---- Toolbar ----
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--_muted);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+
+  .track {
+    position: relative;
+    width: 34px;
+    height: 20px;
+    border: 1px solid color-mix(in srgb, var(--_muted) 60%, transparent);
+    border-radius: 999px;
+    transition: background-color 0.15s ease-out, border-color 0.15s ease-out;
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: color-mix(in srgb, var(--_muted) 80%, transparent);
+      transition: transform 0.15s ease-out;
+    }
+  }
+
+  &[aria-checked='true'] .track {
+    border-color: var(--_primary);
+    background: var(--_primary);
+
+    &::after {
+      background: var(--_on-primary);
+      transform: translateX(14px);
+    }
+  }
+}
+
+.ghost-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 1px solid color-mix(in srgb, var(--_muted) 40%, transparent);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--_text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.15s ease-out, background-color 0.15s ease-out;
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  &:hover:not(:disabled) {
+    border-color: var(--_primary);
+    background: color-mix(in srgb, var(--_primary) 10%, transparent);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+button:focus-visible {
+  outline: 2px solid var(--_primary);
+  outline-offset: 3px;
+}
+
+// ---- Fretboard ----
+
+.board-scroll {
+  overflow-x: auto;
+  padding-bottom: 6px;
+  scrollbar-color: color-mix(in srgb, var(--_primary) 55%, transparent) transparent;
+  scrollbar-width: thin;
+}
+
+.board {
+  display: grid;
+  grid-template-columns: 22px 48px repeat(15, minmax(40px, 1fr));
+  grid-template-rows: repeat(6, 42px) 24px;
+  min-width: 670px;
+  padding: 10px 12px 4px;
+  border: 1px solid color-mix(in srgb, var(--_primary) 30%, transparent);
+  border-radius: 18px;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--_secondary) 6%, var(--_surface)),
+      var(--_surface)
+    );
+  box-shadow: inset 0 10px 30px color-mix(in srgb, var(--_primary) 6%, transparent);
+}
+
+:host(.left-handed) .board {
+  direction: rtl;
+}
+
+.string-name {
+  display: grid;
+  place-items: center;
+  color: var(--_muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.cell {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+
+  // The string itself, thicker toward the low E.
+  &::before {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    top: 50%;
+    height: var(--gauge, 1px);
+    transform: translateY(-50%);
+    background: color-mix(in srgb, var(--_muted) 55%, transparent);
+  }
+
+  &:focus-visible {
+    outline-offset: -4px;
+    border-radius: 10px;
+  }
+}
+
+.open-cell {
+  border-inline-end: 6px solid color-mix(in srgb, var(--_text) 82%, transparent);
+
+  &::before {
+    opacity: 0.45;
+  }
+
+  .mute {
+    position: relative;
+    width: 18px;
+    height: 18px;
+    color: color-mix(in srgb, var(--_muted) 70%, transparent);
+  }
+}
+
+.fret-cell {
+  border-inline-end: 2px solid color-mix(in srgb, var(--_primary) 34%, transparent);
+
+  &.inlay {
+    background: color-mix(in srgb, var(--_primary) 5%, transparent);
+  }
+
+  // Ghost of the dot you'd place.
+  &:hover:not([aria-pressed='true'])::after {
+    content: '';
+    width: 26px;
+    height: 26px;
+    border: 2px solid color-mix(in srgb, var(--_secondary) 55%, transparent);
+    border-radius: 50%;
+  }
+}
+
+.dot,
+.ring {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  animation: place 0.22s var(--_ease-out);
+}
+
+.dot {
+  background: var(--_secondary);
+  color: var(--_on-primary);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--_secondary) 70%, transparent);
+
+  &.root {
+    background: var(--_highlight);
+    box-shadow: 0 0 16px color-mix(in srgb, var(--_highlight) 75%, transparent);
+  }
+}
+
+.ring {
+  border: 2px solid var(--_secondary);
+  background: var(--_surface);
+  color: var(--_text);
+
+  &.root {
+    border-color: var(--_highlight);
+    color: var(--_highlight);
+  }
+}
+
+@keyframes place {
+  from {
+    transform: scale(0.55);
+  }
+}
+
+.fret-number {
+  display: grid;
+  place-items: center;
+  color: color-mix(in srgb, var(--_muted) 45%, transparent);
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+
+  &.inlay {
+    color: var(--_primary);
+    font-weight: 900;
+  }
+}
+
+// ---- Reading ----
+
+.readout {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  min-height: 150px;
+}
+
+.prompt,
+.no-match,
+.notes,
+.match,
+.bass-dropped {
+  margin: 0;
+}
+
+.prompt {
+  color: var(--_muted);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.no-match {
+  color: var(--_text);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.notes {
+  color: var(--_highlight);
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+}
+
+.reading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 22px;
+}
+
+.chord-name {
+  margin: 0;
+  font-size: clamp(48px, 9vw, 76px);
+  font-weight: 900;
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+  text-shadow:
+    0 0 18px color-mix(in srgb, var(--_primary) 80%, transparent),
+    0 0 32px color-mix(in srgb, var(--_secondary) 50%, transparent);
+}
+
+.formula {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    min-width: 36px;
+    padding: 5px 10px;
+    border: 1px solid color-mix(in srgb, var(--_primary) 55%, transparent);
+    border-radius: 999px;
+    color: var(--_primary);
+    font-size: 14px;
+    font-weight: 800;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+
+  li.omitted {
+    border-style: dashed;
+    border-color: color-mix(in srgb, var(--_muted) 40%, transparent);
+    color: color-mix(in srgb, var(--_muted) 65%, transparent);
+  }
+}
+
+.match {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--_muted);
+  font-size: 13px;
+
+  &.exact {
+    color: var(--_primary);
+    font-weight: 700;
+  }
+
+  svg {
+    width: 16px;
+    height: 16px;
+    flex: none;
+  }
+}
+
+.bass-dropped {
+  color: var(--_highlight);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.alternatives,
+.targets {
+  display: grid;
+  gap: 8px;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  padding: 6px 14px;
+  border: 1px solid color-mix(in srgb, var(--_muted) 38%, transparent);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--_text);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.15s ease-out, background-color 0.15s ease-out, color 0.15s ease-out;
+
+  &:hover:not(:disabled) {
+    border-color: var(--_primary);
+  }
+
+  &[aria-pressed='true'],
+  &[aria-checked='true'] {
+    border-color: var(--_primary);
+    background: color-mix(in srgb, var(--_primary) 16%, transparent);
+    color: var(--_primary);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .full {
+    color: var(--_muted);
+    font-weight: 600;
+  }
+}
+
+// ---- Add ----
+
+.add-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px 24px;
+  padding-top: 18px;
+  border-top: 1px solid color-mix(in srgb, var(--_primary) 25%, transparent);
+}
+
+.add-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  margin-inline-start: auto;
+}
+
+.add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 18px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--_primary);
+  color: var(--_on-primary);
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+
+  svg {
+    width: 18px;
+    height: 18px;
+    stroke-width: 2.8;
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}
+
+// Left of the button, so an empty status doesn't push it off the edge.
+.added {
+  order: -1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 20px;
+  margin: 0;
+  color: var(--_primary);
+  font-size: 14px;
+  font-weight: 700;
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dot,
+  .ring {
+    animation: none;
+  }
+}
