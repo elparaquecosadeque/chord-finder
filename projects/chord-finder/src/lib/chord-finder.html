@@ -37,43 +37,50 @@
   @if (inputError()) {
   <p class="input-error">{{ inputError() }}</p>
   }
-  <section class="compact-grid" [attr.aria-label]="text().resultsLabel">
-    @for (result of compactResults(); track trackByResultId($index, result)) {
-    <div class="compact-chord">
-      @if (result.error) {
-      <p class="compact-error">{{ result.raw }}: {{ result.error }}</p>
-      } @else if (result.positions[selectedIndex(result.id)]; as position) {
-      <app-chord-diagram
-        [title]="result.displayName"
-        [position]="position"
-        [positionIndex]="selectedIndex(result.id)"
-        [showNotes]="showNotes()"
-      />
-      @if (result.positions.length > 1) {
-      <div class="compact-positions">
-        <button
-          type="button"
-          [attr.aria-label]="text().previousPosition + ' — ' + result.displayName"
-          [disabled]="selectedIndex(result.id) === 0"
-          (click)="stepPosition(result, -1)"
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg>
-        </button>
-        <span>{{ selectedIndex(result.id) + 1 }} / {{ result.positions.length }}</span>
-        <button
-          type="button"
-          [attr.aria-label]="text().nextPosition + ' — ' + result.displayName"
-          [disabled]="selectedIndex(result.id) === result.positions.length - 1"
-          (click)="stepPosition(result, 1)"
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
-        </button>
+  @for (group of compactGroups(); let gi = $index; track gi) {
+  <section class="compact-group" [attr.aria-label]="group.name || text().resultsLabel">
+    @if (group.name) {
+    <h3 class="compact-section-name">{{ group.name }}</h3>
+    }
+    <div class="compact-grid">
+      @for (result of group.results; track trackByResultId($index, result)) {
+      <div class="compact-chord">
+        @if (result.error) {
+        <p class="compact-error">{{ result.raw }}: {{ result.error }}</p>
+        } @else if (result.positions[selectedIndex(result.id)]; as position) {
+        <app-chord-diagram
+          [title]="result.displayName"
+          [position]="position"
+          [positionIndex]="selectedIndex(result.id)"
+          [showNotes]="showNotes()"
+        />
+        @if (result.positions.length > 1) {
+        <div class="compact-positions">
+          <button
+            type="button"
+            [attr.aria-label]="text().previousPosition + ' — ' + result.displayName"
+            [disabled]="selectedIndex(result.id) === 0"
+            (click)="stepPosition(result, -1)"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg>
+          </button>
+          <span>{{ selectedIndex(result.id) + 1 }} / {{ result.positions.length }}</span>
+          <button
+            type="button"
+            [attr.aria-label]="text().nextPosition + ' — ' + result.displayName"
+            [disabled]="selectedIndex(result.id) === result.positions.length - 1"
+            (click)="stepPosition(result, 1)"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
+          </button>
+        </div>
+        }
+        }
       </div>
       }
-      }
     </div>
-    }
   </section>
+  }
 </div>
 } @else {
 <main class="page-shell">

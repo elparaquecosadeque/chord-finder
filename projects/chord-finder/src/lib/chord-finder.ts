@@ -197,10 +197,12 @@ export class ChordFinderComponent {
   catalogOpen: Record<string, boolean> = {};
   catalogPreviewIndex: Record<string, number> = {};
   // Compact mode has no section headings: every chord in one grid.
-  readonly compactResults = computed(() =>
+  // One row per section ("verse: C, G; chorus: Am, F"); plain input is a
+  // single unnamed row.
+  readonly compactGroups = computed(() =>
     this.inputMode() === 'sections'
-      ? this.sections().flatMap((section) => section.results)
-      : this.results(),
+      ? this.sections()
+      : [{ name: '', results: this.results() }],
   );
   readonly hasResults = computed(() =>
     this.inputMode() === 'sections'
