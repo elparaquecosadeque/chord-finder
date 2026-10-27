@@ -103,20 +103,23 @@
     </button>
   </div>
   <div class="positions">
-    @if (r.positions.length > 1) {
+    @if (shapes().length > 1) {
     <button type="button" class="icon-btn" [attr.aria-label]="text().previousPosition" (click)="stepPosition(-1)">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg>
     </button>
     }
-    <p class="match" [class.exact]="r.positionIndex !== null">
+    <p class="match" [class.exact]="shapeIndex() !== null">
       @if (r.positionIndex !== null) {
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
       {{ text().exact(r.positionIndex + 1, r.positions.length) }}
+      } @else if (r.triadIndex !== null) {
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+      {{ text().triad(r.triadIndex + 1, r.triads.length, triadStrings()) }}
       } @else {
-      {{ text().custom(r.positions.length) }}
+      {{ text().custom(r.positions.length, r.triads.length) }}
       }
     </p>
-    @if (r.positions.length > 1 || r.positionIndex === null) {
+    @if (shapes().length > 1 || (shapes().length === 1 && shapeIndex() === null)) {
     <button type="button" class="icon-btn" [attr.aria-label]="text().nextPosition" (click)="stepPosition(1)">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
     </button>

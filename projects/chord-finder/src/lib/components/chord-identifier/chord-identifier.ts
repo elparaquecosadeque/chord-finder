@@ -47,9 +47,11 @@ const COPY = {
     omitted: 'omitted',
     alternatives: 'Possible readings',
     exact: (n: number, total: number) => `Database position ${n} of ${total}`,
-    custom: (total: number) => `Your own shape — ${total} positions in the database`,
-    previousPosition: 'Draw the previous database position',
-    nextPosition: 'Draw the next database position',
+    triad: (n: number, total: number, strings: string) => `Triad ${n} of ${total} · strings ${strings}`,
+    custom: (positions: number, triads: number) =>
+      triads ? `Your own shape — ${positions} database positions and ${triads} triads` : `Your own shape — ${positions} positions in the database`,
+    previousPosition: 'Draw the previous position',
+    nextPosition: 'Draw the next position',
     showNotes: 'Show note names',
     showDegrees: 'Show degrees',
     highlight: 'Whole neck',
@@ -72,9 +74,11 @@ const COPY = {
     omitted: 'omitida',
     alternatives: 'Lecturas posibles',
     exact: (n: number, total: number) => `Posición ${n} de ${total} de la base`,
-    custom: (total: number) => `Forma propia — ${total} posiciones en la base`,
-    previousPosition: 'Dibujar la posición anterior de la base',
-    nextPosition: 'Dibujar la siguiente posición de la base',
+    triad: (n: number, total: number, strings: string) => `Tríada ${n} de ${total} · cuerdas ${strings}`,
+    custom: (positions: number, triads: number) =>
+      triads ? `Forma propia — ${positions} posiciones en la base y ${triads} tríadas` : `Forma propia — ${positions} posiciones en la base`,
+    previousPosition: 'Dibujar la posición anterior',
+    nextPosition: 'Dibujar la siguiente posición',
     showNotes: 'Mostrar notas',
     showDegrees: 'Mostrar grados',
     highlight: 'Todo el mástil',
@@ -143,6 +147,21 @@ export class ChordIdentifier {
     },
   });
   readonly reading = computed(() => this.readings()[this.readingIndex()] ?? null);
+  // What › and ‹ walk through: chords-db's positions, then close triads.
+  readonly shapes = computed(() => {
+    const reading = this.reading();
+    return reading ? [...reading.positions, ...reading.triads] : [];
+  });
+  readonly shapeIndex = computed(() => {
+    const reading = this.reading();
+    if (!reading) return null;
+    if (reading.positionIndex !== null) return reading.positionIndex;
+    return reading.triadIndex !== null ? reading.positions.length + reading.triadIndex : null;
+  });
+  // "3–2–1" for a triad on the top three strings.
+  readonly triadStrings = computed(() =>
+    this.frets().flatMap((fret, s) => (fret === MUTED ? [] : [6 - s])).join('–'),
+  );
   readonly sounding = computed(() => this.frets().filter((fret) => fret !== MUTED).length);
   readonly pristine = computed(() => this.frets().every((fret) => fret === OPEN));
   readonly noteNames = computed(() =>
@@ -228,14 +247,13 @@ export class ChordIdentifier {
     saveFlag(HIGHLIGHT_KEY, value);
   }
 
-  // Draw the next/previous chords-db position of the current reading; from a
-  // shape of your own, › starts at the first one and ‹ at the last.
+  // Draw the next/previous shape of the current reading; from a shape of your
+  // own, › starts at the first one and ‹ at the last.
   stepPosition(delta: number): void {
-    const reading = this.reading();
-    if (!reading?.positions.length) return;
-    const count = reading.positions.length;
-    const current = reading.positionIndex ?? (delta > 0 ? -1 : 0);
-    this.frets.set([...reading.positions[(current + delta + count) % count]]);
+    const shapes = this.shapes();
+    if (!shapes.length) return;
+    const current = this.shapeIndex() ?? (delta > 0 ? -1 : 0);
+    this.frets.set([...shapes[(current + delta + shapes.length) % shapes.length]]);
   }
 
   onBoardKey(event: KeyboardEvent): void {

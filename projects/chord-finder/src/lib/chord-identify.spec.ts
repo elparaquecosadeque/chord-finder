@@ -22,6 +22,19 @@ describe('identifyChord', () => {
     expect(best.positions[1]).toEqual([-1, 3, 5, 5, 5, 3]);
   });
 
+  it('finds close-position triads chords-db does not have', () => {
+    for (const shape of [[-1, -1, -1, 9, 8, 7], [-1, 7, 5, 4, -1, -1]]) {
+      const [best] = identifyChord(shape);
+      expect(best.name).toBe('Em');
+      expect(best.positionIndex).toBeNull();
+      expect(best.triads[best.triadIndex!]).toEqual(shape);
+    }
+  });
+
+  it('has no triads for chords of more than three notes', () => {
+    expect(identifyChord([-1, 3, 2, 3, 1, 0])[0].triads).toEqual([]); // C7
+  });
+
   it('matches a barre shape above the first fret (chords-db stores it relative to baseFret)', () => {
     const [best] = identifyChord([-1, 3, 5, 5, 5, 3]);
     expect(best.name).toBe('C');

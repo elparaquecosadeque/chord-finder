@@ -41,6 +41,42 @@ export interface ChordReading {
   positions: number[][];
   /** Index into `positions` that has exactly this shape, if any. */
   positionIndex: number | null;
+  /** Close-position triads on adjacent strings (3-note qualities only), as absolute frets. */
+  triads: number[][];
+  /** Index into `triads` that has exactly this shape, if any. */
+  triadIndex: number | null;
+}
+
+const STRING_SETS = [[0, 1, 2], [1, 2, 3], [2, 3, 4], [3, 4, 5]];
+const MAX_STRETCH = 4;
+
+/**
+ * Every close-position voicing (the three notes ascending within an octave,
+ * one per string) of a three-note chord on each set of three adjacent strings:
+ * root position and both inversions. Lowest string set first, then up the neck.
+ */
+export function closeTriads(rootPitchClass: number, semitones: number[]): number[][] {
+  const pitchClasses = semitones.map((semitone) => (rootPitchClass + semitone) % 12);
+  return STRING_SETS.flatMap((strings) => {
+    const triads: number[][] = [];
+    for (let inversion = 0; inversion < 3; inversion++) {
+      const order = [0, 1, 2].map((i) => pitchClasses[(i + inversion) % 3]);
+      const options = strings.map((string, i) =>
+        [0, 12].map((octave) => ((order[i] - STANDARD_TUNING[string] + 120) % 12) + octave).filter((f) => f <= FRET_COUNT),
+      );
+      for (const a of options[0]) for (const b of options[1]) for (const c of options[2]) {
+        const chosen = [a, b, c];
+        const midi = chosen.map((fret, i) => STANDARD_TUNING[strings[i]] + fret);
+        if (!(midi[0] < midi[1] && midi[1] < midi[2] && midi[2] - midi[0] < 12)) continue;
+        if (Math.max(...chosen) - Math.min(...chosen) > MAX_STRETCH) continue;
+        const frets = Array(6).fill(-1);
+        strings.forEach((string, i) => (frets[string] = chosen[i]));
+        triads.push(frets);
+      }
+    }
+    const lowest = (frets: number[]) => Math.min(...frets.filter((fret) => fret >= 0));
+    return triads.sort((a, b) => lowest(a) - lowest(b));
+  });
 }
 
 /** Note name of a formula degree over a root pitch class, e.g. (4, 'b3') → "G". */
@@ -103,6 +139,11 @@ export function identifyChord(frets: number[]): ChordReading[] {
       const target = slash ?? base;
       const positions = target.positions.map((position) => absoluteFrets(position.frets, position.baseFret));
       const index = positions.findIndex((position) => position.join() === frets.join());
+      const triads =
+        entry.formula.length === 3 && degrees.length === 3
+          ? closeTriads(root, entry.formula.map((degree) => DEGREE_SEMITONES[degree]))
+          : [];
+      const triadIndex = triads.findIndex((triad) => triad.join() === frets.join());
 
       readings.push({
         name,
@@ -114,6 +155,8 @@ export function identifyChord(frets: number[]): ChordReading[] {
         rootPitchClass: root,
         positions,
         positionIndex: index >= 0 ? index : null,
+        triads,
+        triadIndex: triadIndex >= 0 ? triadIndex : null,
         rank: [entry.formula.length - degrees.length, bass === root ? 0 : 1, entry.formula.length, suffixIndex],
       });
     });
