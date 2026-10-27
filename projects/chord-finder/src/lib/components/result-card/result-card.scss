@@ -20,11 +20,13 @@
   margin-bottom: 16px;
 }
 
-.result-header-controls {
+.result-title {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 10px;
+  margin-top: 4px;
 }
 
 .result-label,
@@ -32,8 +34,7 @@
   margin: 0;
 }
 
-.result-label,
-.select-label {
+.result-label {
   color: var(--_chords-secondary);
   font-size: 12px;
   font-weight: 900;
@@ -42,7 +43,7 @@
 }
 
 .result-header h2 {
-  margin: 4px 0 0;
+  margin: 0;
   color: var(--_chords-text);
   font-size: 30px;
 }
@@ -54,24 +55,55 @@
   font-weight: 800;
 }
 
-.select-label {
-  display: grid;
-  gap: 8px;
-}
-
-select {
-  width: 100%;
-  padding: 11px 12px;
-  color: var(--_chords-text);
-  background: var(--_chords-background-alt);
-  border: 1px solid var(--_chords-secondary);
-  border-radius: 12px;
+// Same stepper as the compact view's .compact-positions.
+.positions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin-top: 10px;
+  color: var(--_chords-muted);
+  font-size: 13px;
   font-weight: 800;
-  outline: none;
-}
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 
-select:focus {
-  border-color: var(--_chords-primary);
+  button {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: none;
+    color: var(--_chords-text);
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      background: color-mix(in srgb, var(--_chords-primary) 14%, transparent);
+    }
+
+    &:disabled {
+      opacity: 0.3;
+      cursor: default;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--_chords-primary);
+      outline-offset: -2px;
+    }
+  }
+
+  svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
 }
 
 .svg-wrap {

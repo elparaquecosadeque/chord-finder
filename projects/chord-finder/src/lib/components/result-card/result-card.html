@@ -2,30 +2,18 @@
   <header class="result-header">
     <div>
       <p class="result-label">{{ text().chord }}</p>
-      <h2>{{ result().displayName }}</h2>
-      @if (result().dbName && typedName() !== result().displayName) {
-        <p class="db-name">{{ text().normalizedAs }} {{ result().dbName }}</p>
-      }
-    </div>
-    @if (!catalogOpen()) {
-      <div class="result-header-controls">
-        @if (result().positions.length > 1) {
-          <label class="select-label">
-            {{ text().position }}
-            <select [ngModel]="positionIndex()" (ngModelChange)="positionChange.emit($event)">
-              @for (position of result().positions; track $index) {
-                <option [value]="$index">{{ $index + 1 }} {{ text().of }} {{ result().positions.length }}</option>
-              }
-            </select>
-          </label>
-        }
-        @if (!result().error && catalog().length > 0) {
+      <div class="result-title">
+        <h2>{{ result().displayName }}</h2>
+        @if (!catalogOpen() && !result().error && catalog().length > 0) {
           <button type="button" class="catalog-toggle" (click)="toggleCatalog.emit()">
             {{ text().changeQuality }}
           </button>
         }
       </div>
-    }
+      @if (result().dbName && typedName() !== result().displayName) {
+        <p class="db-name">{{ text().normalizedAs }} {{ result().dbName }}</p>
+      }
+    </div>
   </header>
 
   @if (result().error) {
@@ -79,5 +67,26 @@
     <div class="svg-wrap" [attr.data-result-id]="result().id">
       <app-chord-diagram [title]="result().displayName" [position]="position" [positionIndex]="positionIndex()" [showNotes]="showNotes()" />
     </div>
+    @if (result().positions.length > 1) {
+      <div class="positions" role="group" [attr.aria-label]="text().position">
+        <button
+          type="button"
+          [attr.aria-label]="text().previousPosition + ' — ' + result().displayName"
+          [disabled]="positionIndex() === 0"
+          (click)="positionChange.emit(positionIndex() - 1)"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg>
+        </button>
+        <span>{{ positionIndex() + 1 }} / {{ result().positions.length }}</span>
+        <button
+          type="button"
+          [attr.aria-label]="text().nextPosition + ' — ' + result().displayName"
+          [disabled]="positionIndex() === result().positions.length - 1"
+          (click)="positionChange.emit(positionIndex() + 1)"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
+        </button>
+      </div>
+    }
   }
 </article>

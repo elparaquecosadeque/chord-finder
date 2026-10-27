@@ -1,10 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import type { ChordFinderCopy } from '../../chord-finder';
 import { ChordSearchResult, ChordsDbChord, ChordsDbPosition } from '../../models/chord.model';
 import { ChordDiagram } from '../chord-diagram/chord-diagram';
 
-// One result card: the normal diagram + position picker, or — while catalogOpen —
+// One result card: the normal diagram + position stepper, or — while catalogOpen —
 // a collapsed-by-default carousel for browsing this same root's other qualities.
 // Purely presentational: all state (position index, catalog open/preview index)
 // lives in ChordFinderComponent, keyed by result.id, so two cards for the same
@@ -12,7 +11,7 @@ import { ChordDiagram } from '../chord-diagram/chord-diagram';
 @Component({
   selector: 'app-result-card',
   standalone: true,
-  imports: [FormsModule, ChordDiagram],
+  imports: [ChordDiagram],
   templateUrl: './result-card.html',
   styleUrl: './result-card.scss',
   changeDetection: ChangeDetectionStrategy.Eager,
