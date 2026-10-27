@@ -224,6 +224,51 @@ h1 {
   }
 }
 
+.action-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+// Secondary to Export: outline, not filled.
+.search-row .draw-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  color: var(--_chords-primary);
+  background: transparent;
+  border: 2px solid var(--_chords-primary);
+  transition: background-color 0.15s ease-out, box-shadow 0.15s ease-out;
+
+  &:hover {
+    background: color-mix(in srgb, var(--_chords-primary) 12%, transparent);
+    box-shadow: 0 0 18px color-mix(in srgb, var(--_chords-primary) 45%, transparent);
+  }
+}
+
+.draw-btn svg,
+.compact-draw svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+
+  circle {
+    fill: currentColor;
+    stroke: none;
+  }
+}
+
+.search-row button:focus-visible,
+.dialog-close:focus-visible {
+  outline: 2px solid var(--_chords-primary);
+  outline-offset: 3px;
+}
+
 .export-wrap {
   display: flex;
   flex-direction: column;
@@ -573,4 +618,113 @@ input[type='color'] {
   border: 1px solid color-mix(in srgb, var(--_chords-danger) 60%, transparent);
   color: var(--_chords-danger);
   font-size: 13px;
+}
+
+.compact-draw {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid color-mix(in srgb, var(--_chords-muted) 45%, transparent);
+  border-radius: 8px;
+  background: none;
+  color: var(--_chords-text);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--_chords-primary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--_chords-primary);
+    outline-offset: 2px;
+  }
+}
+
+// ---- Chord identifier dialog ----
+
+.identifier-dialog {
+  width: min(980px, calc(100vw - 32px));
+  max-width: none;
+  max-height: calc(100dvh - 32px);
+  padding: 0;
+  border: 1px solid var(--_chords-border);
+  border-radius: 26px;
+  background: color-mix(in srgb, var(--_chords-background-alt) 92%, var(--_chords-secondary));
+  color: var(--_chords-text);
+  font-family: inherit;
+  box-shadow:
+    0 30px 80px rgba(0, 0, 0, 0.65),
+    0 0 36px color-mix(in srgb, var(--_chords-primary) 28%, transparent);
+
+  &[open] {
+    animation: dialog-in 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  &::backdrop {
+    background: rgba(2, 0, 8, 0.72);
+    backdrop-filter: blur(6px);
+  }
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+  }
+}
+
+.dialog-inner {
+  display: grid;
+  gap: 18px;
+  padding: clamp(18px, 3.5vw, 32px);
+}
+
+.dialog-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+
+  h2 {
+    margin: 0;
+    font-size: clamp(24px, 4vw, 34px);
+    font-weight: 900;
+    letter-spacing: -0.03em;
+  }
+}
+
+.dialog-close {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--_chords-muted) 40%, transparent);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--_chords-text);
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--_chords-primary);
+    color: var(--_chords-primary);
+  }
+
+  svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.4;
+    stroke-linecap: round;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .identifier-dialog[open] {
+    animation: none;
+  }
 }

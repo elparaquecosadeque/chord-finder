@@ -20,6 +20,10 @@
       <span class="track" aria-hidden="true"></span>
       {{ text().showNotes }}
     </button>
+    <button type="button" class="compact-draw" (click)="openIdentifier()">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h18M3 12h18M3 17h18M8 4v16M15 4v16" /><circle cx="11.5" cy="12" r="2.4" /></svg>
+      {{ text().drawChord }}
+    </button>
     <label class="compact-size" [title]="text().diagramSize">
       <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="8" height="8" rx="1.5" /></svg>
       <input
@@ -111,6 +115,7 @@
         <input type="checkbox" [checked]="showNotes()" (change)="onShowNotesChange($event)" />
         {{ text().showNotes }}
       </label>
+      <div class="action-row">
       <div class="export-wrap">
         <button
           type="button"
@@ -172,6 +177,11 @@
             </div>
           </div>
         </div>
+      </div>
+      <button type="button" class="draw-btn" (click)="openIdentifier()">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h18M3 12h18M3 17h18M8 4v16M15 4v16" /><circle cx="11.5" cy="12" r="2.4" /></svg>
+        {{ text().drawChord }}
+      </button>
       </div>
     </div>
 
@@ -254,3 +264,24 @@
   </footer>
 </main>
 }
+
+<dialog
+  #identifierDialog
+  class="identifier-dialog"
+  [attr.aria-label]="text().drawChord"
+  (click)="onIdentifierDialogClick($event)"
+>
+  <div class="dialog-inner">
+    <div class="dialog-head">
+      <h2>{{ text().drawChord }}</h2>
+      <button type="button" class="dialog-close" [attr.aria-label]="text().close" (click)="identifierDialog.close()">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+      </button>
+    </div>
+    <chord-identifier
+      [language]="language()"
+      [targets]="identifierTargets()"
+      (pick)="onChordPicked($event)"
+    />
+  </div>
+</dialog>

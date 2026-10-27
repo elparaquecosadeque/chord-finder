@@ -13,6 +13,7 @@ import {
 import { FormsModule } from '@angular/forms';
 import { qualityDifficulty } from './chord-difficulty';
 import { ChordDiagram } from './components/chord-diagram/chord-diagram';
+import { ChordIdentifier, ChordPick, ChordTarget } from './components/chord-identifier/chord-identifier';
 import { ResultCard } from './components/result-card/result-card';
 import {
   ChordSearchResult,
@@ -56,6 +57,8 @@ export interface ChordFinderCopy {
   showNotes: string;
   diagramSize: string;
   exportPng: string;
+  drawChord: string;
+  close: string;
   bgColor: string;
   lineColor: string;
   transparent: string;
@@ -93,6 +96,8 @@ const COPY: Record<Language, ChordFinderCopy> = {
     showNotes: 'Show notes',
     diagramSize: 'Diagram size',
     exportPng: 'Export PNG',
+    drawChord: 'Draw chord',
+    close: 'Close',
     bgColor: 'Background',
     lineColor: 'Diagram color',
     transparent: 'Transparent',
@@ -129,6 +134,8 @@ const COPY: Record<Language, ChordFinderCopy> = {
     showNotes: 'Mostrar notas',
     diagramSize: 'Tamaño de los diagramas',
     exportPng: 'Exportar PNG',
+    drawChord: 'Dibujar acorde',
+    close: 'Cerrar',
     bgColor: 'Fondo',
     lineColor: 'Color del diagrama',
     transparent: 'Transparente',
@@ -161,7 +168,7 @@ const COPY: Record<Language, ChordFinderCopy> = {
 @Component({
   selector: 'the-chords-chord-finder',
   standalone: true,
-  imports: [FormsModule, ResultCard, ChordDiagram],
+  imports: [FormsModule, ResultCard, ChordDiagram, ChordIdentifier],
   templateUrl: './chord-finder.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './chord-finder.scss',
@@ -210,7 +217,16 @@ export class ChordFinderComponent {
       : this.results().length > 0,
   );
 
+  // Sections the drawn chord can go into; none in plain mode (it just appends).
+  readonly identifierTargets = computed<ChordTarget[]>(() =>
+    this.sections().map((section) => ({
+      name: section.name,
+      full: section.results.length >= this.chordService.MAX_CHORDS_PER_SECTION,
+    })),
+  );
+
   resultsRow = viewChild<ElementRef<HTMLElement>>('resultsRow');
+  identifierDialog = viewChild<ElementRef<HTMLDialogElement>>('identifierDialog');
   sectionsContainer = viewChild<ElementRef<HTMLElement>>('sectionsContainer');
 
   exportPanelOpen = signal(false);
@@ -656,6 +672,42 @@ export class ChordFinderComponent {
     if (!catalog.length) return;
     const current = this.catalogPreviewIndexOf(result.id);
     this.catalogPreviewIndex[result.id] = Math.max(0, Math.min(catalog.length - 1, current + delta));
+  }
+
+  // --- Chord identifier (draw a shape, add it to the progression) ---
+
+  openIdentifier(): void {
+    this.identifierDialog()?.nativeElement.showModal();
+  }
+
+  // Clicks on the dialog itself (not its content) land on the backdrop.
+  onIdentifierDialogClick(event: MouseEvent): void {
+    const dialog = this.identifierDialog()?.nativeElement;
+    if (event.target === dialog) dialog.close();
+  }
+
+  // Appends to the chosen section, or to the end of the field (plain list, or a
+  // sections query that doesn't parse right now). Then shows the drawn shape's
+  // own position on the new card when chords-db has it.
+  onChordPicked(pick: ChordPick): void {
+    const sections = this.sections();
+    const toSection = this.inputMode() === 'sections' && sections.length > 0;
+    const trimmed = this.query().trim().replace(/[,;]\s*$/, '');
+    const newQuery = toSection
+      ? sections
+        .map((section, i) => {
+          const chords = section.results.map((r) => r.raw);
+          if (i === pick.target) chords.push(pick.name);
+          return `${section.name}: ${chords.join(', ')}`;
+        })
+        .join('; ')
+      : trimmed
+        ? `${trimmed}, ${pick.name}`
+        : pick.name;
+    this.onQueryChange(newQuery);
+
+    const added = toSection ? this.sections()[pick.target]?.results.at(-1) : this.results().at(-1);
+    if (added) this.selectedPositionIndex[added.id] = pick.positionIndex ?? 0;
   }
 
   applyCatalogQuality(result: ChordSearchResult): void {

@@ -19,6 +19,7 @@ npm install @gblp/chord-finder
 1. Type chords separated by commas, or name song sections: `intro: A, Bm; chorus: C, D`.
 2. Use sharps or flats, for example `C, F#, C#m, Bb, Am7`.
 3. If a chord has multiple positions, choose one from the position selector.
+   Or click `Draw chord`, mark a shape on the fretboard and add the chord it finds.
 4. Click `Exportar PNG` to download the currently visible chord diagrams as one image.
 
 ## Run Locally
@@ -53,6 +54,8 @@ The static app is generated in `dist/demo-chord-finder/browser`.
   - `src/lib/chord-difficulty.ts` - fingering-difficulty score used to sort qualities.
   - `src/lib/components/chord-diagram/` - SVG chord diagram.
   - `src/lib/components/result-card/` - one result card (diagram + position selector).
+  - `src/lib/components/chord-identifier/` - fretboard where you draw a shape; names it and adds it to the progression (opened from "Draw chord").
+  - `src/lib/chord-identify.ts` - pure engine: shape → chord readings, using the formulas in `@gblp/chords-db`.
   - `src/lib/models/chord.model.ts` - TypeScript shapes for chord data and search results.
 - `src/` - demo app that consumes the library.
 - `.github/workflows/` - GitHub Pages deploy, npm publish, GitHub release.
