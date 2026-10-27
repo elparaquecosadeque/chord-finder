@@ -13,6 +13,7 @@ import { Language } from '../../models/chord.model';
 
 const LEFT_HANDED_KEY = 'chord-finder-left-handed';
 const MUTED = -1;
+const OPEN = 0;
 const STRING_NAMES = ['E', 'A', 'D', 'G', 'B', 'E'];
 const INLAYS = new Set([3, 5, 7, 9, 12, 15]);
 
@@ -39,7 +40,7 @@ const COPY = {
     muted: 'muted',
     leftHanded: 'Left-handed',
     clear: 'Clear',
-    prompt: 'Tap the fretboard to mark notes — at least two strings.',
+    prompt: 'A chord needs at least two strings ringing — unmute one with ×.',
     noMatch: 'No chord in the database matches these notes',
     omitted: 'omitted',
     alternatives: 'Possible readings',
@@ -59,7 +60,7 @@ const COPY = {
     muted: 'apagada',
     leftHanded: 'Zurdo',
     clear: 'Limpiar',
-    prompt: 'Toca el mástil para marcar notas — al menos dos cuerdas.',
+    prompt: 'Un acorde necesita al menos dos cuerdas sonando — reactiva una con ×.',
     noMatch: 'Ningún acorde de la base coincide con estas notas',
     omitted: 'omitida',
     alternatives: 'Lecturas posibles',
@@ -104,12 +105,14 @@ export class ChordIdentifier {
   readonly strings = [5, 4, 3, 2, 1, 0];
   readonly stringNames = STRING_NAMES;
 
-  readonly frets = signal<number[]>(Array(6).fill(MUTED));
+  // Untouched strings ring open, like on a real guitar; × mutes them.
+  readonly frets = signal<number[]>(Array(6).fill(OPEN));
   readonly leftHanded = signal(loadLeftHanded());
   readonly readings = computed(() => identifyChord(this.frets()));
   readonly readingIndex = linkedSignal({ source: this.readings, computation: () => 0 });
   readonly reading = computed(() => this.readings()[this.readingIndex()] ?? null);
   readonly sounding = computed(() => this.frets().filter((fret) => fret !== MUTED).length);
+  readonly pristine = computed(() => this.frets().every((fret) => fret === OPEN));
   readonly noteNames = computed(() =>
     [...new Set(this.frets().flatMap((fret, s) => (fret === MUTED ? [] : [NOTE_NAMES[(STANDARD_TUNING[s] + fret) % 12]])))],
   );
@@ -151,16 +154,16 @@ export class ChordIdentifier {
   }
 
   toggleFret(string: number, fret: number): void {
-    this.frets.update((frets) => frets.map((f, s) => (s !== string ? f : f === fret ? MUTED : fret)));
+    this.frets.update((frets) => frets.map((f, s) => (s !== string ? f : f === fret ? OPEN : fret)));
   }
 
-  // × ↔ ○; a fretted string mutes.
+  // ○ ↔ ×; a fretted string mutes.
   toggleOpen(string: number): void {
-    this.frets.update((frets) => frets.map((f, s) => (s !== string ? f : f === MUTED ? 0 : MUTED)));
+    this.frets.update((frets) => frets.map((f, s) => (s !== string ? f : f === MUTED ? OPEN : MUTED)));
   }
 
   clear(): void {
-    this.frets.set(Array(6).fill(MUTED));
+    this.frets.set(Array(6).fill(OPEN));
   }
 
   setLeftHanded(value: boolean): void {
