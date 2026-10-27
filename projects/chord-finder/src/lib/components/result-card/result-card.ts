@@ -41,6 +41,12 @@ export class ResultCard {
     return positions[this.positionIndex()] ?? positions[0] ?? null;
   });
 
+  // Wraps around, like the compact view's stepper.
+  step(delta: number): void {
+    const count = this.result().positions.length;
+    this.positionChange.emit((this.positionIndex() + delta + count) % count);
+  }
+
   readonly previewEntry = computed<ChordsDbChord | null>(() => this.catalog()[this.previewIndex()] ?? null);
 
   readonly previewPosition = computed<ChordsDbPosition | null>(

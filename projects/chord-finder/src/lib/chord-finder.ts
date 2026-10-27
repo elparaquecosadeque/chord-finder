@@ -582,9 +582,7 @@ export class ChordFinderComponent {
       this.results.set([]);
       for (const section of sections) {
         for (const result of section.results) {
-          if (this.selectedPositionIndex[result.id] === undefined) {
-            this.selectedPositionIndex[result.id] = 0;
-          }
+          this.keepPosition(result);
         }
       }
     } else {
@@ -594,9 +592,7 @@ export class ChordFinderComponent {
       this.results.set(results);
       this.sections.set([]);
       for (const result of results) {
-        if (this.selectedPositionIndex[result.id] === undefined) {
-          this.selectedPositionIndex[result.id] = 0;
-        }
+        this.keepPosition(result);
       }
     }
   }
@@ -605,9 +601,17 @@ export class ChordFinderComponent {
     this.selectedPositionIndex[resultId] = Number(value);
   }
 
+  // Wraps around: › on the last position goes back to the first, ‹ on the first to the last.
   stepPosition(result: ChordSearchResult, delta: number): void {
-    const last = result.positions.length - 1;
-    this.selectedPositionIndex[result.id] = Math.max(0, Math.min(last, this.selectedIndex(result.id) + delta));
+    const count = result.positions.length;
+    this.selectedPositionIndex[result.id] = (this.selectedIndex(result.id) + delta + count) % count;
+  }
+
+  // New results start at position 1; one whose list shrank (triads hidden) keeps its
+  // place, or moves to its new last position.
+  private keepPosition(result: ChordSearchResult): void {
+    const last = Math.max(0, result.positions.length - 1);
+    this.selectedPositionIndex[result.id] = Math.min(this.selectedPositionIndex[result.id] ?? 0, last);
   }
 
   selectedIndex(resultId: string): number {

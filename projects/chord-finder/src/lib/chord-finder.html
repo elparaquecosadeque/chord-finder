@@ -74,7 +74,6 @@
             <button
               type="button"
               [attr.aria-label]="text().previousPosition + ' — ' + result.displayName"
-              [disabled]="selectedIndex(result.id) === 0"
               (click)="stepPosition(result, -1)"
             >
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg>
@@ -83,7 +82,6 @@
             <button
               type="button"
               [attr.aria-label]="text().nextPosition + ' — ' + result.displayName"
-              [disabled]="selectedIndex(result.id) === result.positions.length - 1"
               (click)="stepPosition(result, 1)"
             >
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
