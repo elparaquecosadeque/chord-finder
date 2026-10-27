@@ -1,6 +1,6 @@
 {
   "name": "demo-chord-finder",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "license": "SEE LICENSE IN LICENSE",
   "description": "Angular vertical slice for searching guitar chords by name and rendering SVG diagrams from chords-db.",
   "scripts": {
@@ -25,7 +25,7 @@
     "@angular/core": "22.0.4",
     "@angular/forms": "22.0.4",
     "@angular/platform-browser": "22.0.4",
-    "@gblp/chords-db": "1.0.0",
+    "@gblp/chords-db": "1.1.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.8.1",
     "zone.js": "~0.15.0"
