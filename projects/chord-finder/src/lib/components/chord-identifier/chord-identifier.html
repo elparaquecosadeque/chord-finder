@@ -1,14 +1,26 @@
 <div class="toolbar">
-  <button
-    type="button"
-    role="switch"
-    class="switch"
-    [attr.aria-checked]="leftHanded()"
-    (click)="setLeftHanded(!leftHanded())"
-  >
-    <span class="track" aria-hidden="true"></span>
-    {{ text().leftHanded }}
-  </button>
+  <div class="switches">
+    <button
+      type="button"
+      role="switch"
+      class="switch"
+      [attr.aria-checked]="leftHanded()"
+      (click)="setLeftHanded(!leftHanded())"
+    >
+      <span class="track" aria-hidden="true"></span>
+      {{ text().leftHanded }}
+    </button>
+    <button
+      type="button"
+      role="switch"
+      class="switch"
+      [attr.aria-checked]="highlight()"
+      (click)="setHighlight(!highlight())"
+    >
+      <span class="track" aria-hidden="true"></span>
+      {{ text().highlight }}
+    </button>
+  </div>
   <button type="button" class="ghost-btn" [disabled]="pristine()" (click)="clear()">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3" /></svg>
     {{ text().clear }}
@@ -50,6 +62,8 @@
     >
       @if (frets()[s] === f) {
       <span class="dot" [class.root]="isRoot(s, f)">{{ label(s, f) }}</span>
+      } @else if (inChord(s, f)) {
+      <span class="ghost in-chord" [class.root]="isRoot(s, f)">{{ label(s, f) }}</span>
       } @else {
       <span class="ghost">{{ noteName(s, f) }}</span>
       }
@@ -72,21 +86,42 @@
     <p class="chord-name">{{ r.name }}</p>
     <ol class="formula">
       @for (d of r.degrees; track d) {
-      <li>{{ d === '1' ? 'R' : d }}</li>
+      <li>{{ formulaLabel(d) }}</li>
       }
       @for (d of r.omitted; track d) {
-      <li class="omitted" [attr.title]="text().omitted">({{ d }})</li>
+      <li class="omitted" [attr.title]="text().omitted">({{ formulaLabel(d) }})</li>
       }
     </ol>
+    <button
+      type="button"
+      class="icon-btn"
+      [attr.aria-label]="showDegrees() ? text().showNotes : text().showDegrees"
+      [attr.title]="showDegrees() ? text().showNotes : text().showDegrees"
+      (click)="setShowDegrees(!showDegrees())"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h14l-3.5-3.5M20 16H6l3.5 3.5" /></svg>
+    </button>
   </div>
-  <p class="match" [class.exact]="r.positionIndex !== null">
-    @if (r.positionIndex !== null) {
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
-    {{ text().exact(r.positionIndex + 1) }}
-    } @else {
-    {{ text().custom }}
+  <div class="positions">
+    @if (r.positions.length > 1) {
+    <button type="button" class="icon-btn" [attr.aria-label]="text().previousPosition" (click)="stepPosition(-1)">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg>
+    </button>
     }
-  </p>
+    <p class="match" [class.exact]="r.positionIndex !== null">
+      @if (r.positionIndex !== null) {
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+      {{ text().exact(r.positionIndex + 1, r.positions.length) }}
+      } @else {
+      {{ text().custom(r.positions.length) }}
+      }
+    </p>
+    @if (r.positions.length > 1 || r.positionIndex === null) {
+    <button type="button" class="icon-btn" [attr.aria-label]="text().nextPosition" (click)="stepPosition(1)">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
+    </button>
+    }
+  </div>
   @if (r.bassDropped) {
   <p class="bass-dropped">{{ text().bassDropped(r.addName) }}</p>
   }

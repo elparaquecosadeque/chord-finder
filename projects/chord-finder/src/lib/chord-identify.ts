@@ -12,7 +12,7 @@ export const FRET_COUNT = 15; // chords-db never goes past fret 15
 // chords-db's own key spelling, indexed by pitch class.
 export const NOTE_NAMES = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
 
-const DEGREE_SEMITONES: Record<string, number> = {
+export const DEGREE_SEMITONES: Record<string, number> = {
   '1': 0, b2: 1, b9: 1, '2': 2, '9': 2, '#9': 3, b3: 3, '3': 4, '4': 5, '11': 5,
   '#11': 6, b5: 6, '5': 7, '#5': 8, b13: 8, '6': 9, '13': 9, bb7: 9, b7: 10, '7': 11,
 };
@@ -37,8 +37,15 @@ export interface ChordReading {
   /** Pitch class → degree label, for labelling dots. */
   degreeOf: Record<number, string>;
   rootPitchClass: number;
-  /** Index of the chords-db position for `addName` that has exactly this shape, if any. */
+  /** chords-db positions for `addName`, as absolute frets (same shape as the input). */
+  positions: number[][];
+  /** Index into `positions` that has exactly this shape, if any. */
   positionIndex: number | null;
+}
+
+/** Note name of a formula degree over a root pitch class, e.g. (4, 'b3') → "G". */
+export function degreeNote(rootPitchClass: number, degree: string): string {
+  return NOTE_NAMES[(rootPitchClass + DEGREE_SEMITONES[degree]) % 12];
 }
 
 /** Sounding MIDI notes for a shape; -1 = muted string. */
@@ -94,9 +101,8 @@ export function identifyChord(frets: number[]): ChordReading[] {
       const name =
         bass === root ? formatChordName(rootName, suffix) : `${formatChordName(rootName, suffix)}/${NOTE_NAMES[bass]}`;
       const target = slash ?? base;
-      const index = target.positions.findIndex(
-        (position) => absoluteFrets(position.frets, position.baseFret).join() === frets.join(),
-      );
+      const positions = target.positions.map((position) => absoluteFrets(position.frets, position.baseFret));
+      const index = positions.findIndex((position) => position.join() === frets.join());
 
       readings.push({
         name,
@@ -106,6 +112,7 @@ export function identifyChord(frets: number[]): ChordReading[] {
         omitted: entry.formula.filter((degree) => !degrees.includes(degree)),
         degreeOf,
         rootPitchClass: root,
+        positions,
         positionIndex: index >= 0 ? index : null,
         rank: [entry.formula.length - degrees.length, bass === root ? 0 : 1, entry.formula.length, suffixIndex],
       });

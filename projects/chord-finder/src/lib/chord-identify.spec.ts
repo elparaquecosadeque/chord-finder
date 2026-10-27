@@ -16,6 +16,12 @@ describe('identifyChord', () => {
     expect(best.positionIndex).toBe(0);
   });
 
+  it('lists the db positions as absolute frets, ready to draw', () => {
+    const [best] = identifyChord([-1, 3, 2, 0, 1, 0]);
+    expect(best.positions[0]).toEqual([-1, 3, 2, 0, 1, 0]);
+    expect(best.positions[1]).toEqual([-1, 3, 5, 5, 5, 3]);
+  });
+
   it('matches a barre shape above the first fret (chords-db stores it relative to baseFret)', () => {
     const [best] = identifyChord([-1, 3, 5, 5, 5, 3]);
     expect(best.name).toBe('C');

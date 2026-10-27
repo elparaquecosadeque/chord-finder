@@ -47,6 +47,12 @@ svg {
   gap: 12px;
 }
 
+.switches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 22px;
+}
+
 .switch {
   display: inline-flex;
   align-items: center;
@@ -229,6 +235,20 @@ button:focus-visible {
   }
 }
 
+// The chord's notes elsewhere on the neck ("Whole neck" switch).
+.ghost.in-chord {
+  border-color: color-mix(in srgb, var(--_secondary) 75%, transparent);
+  background: color-mix(in srgb, var(--_secondary) 18%, var(--_surface));
+  color: var(--_text);
+  font-weight: 800;
+
+  &.root {
+    border-color: color-mix(in srgb, var(--_highlight) 80%, transparent);
+    background: color-mix(in srgb, var(--_highlight) 14%, var(--_surface));
+    color: var(--_highlight);
+  }
+}
+
 // Every note on the board, faint until you place one.
 .ghost {
   position: relative;
@@ -386,6 +406,38 @@ button:focus-visible {
     border-color: color-mix(in srgb, var(--_muted) 40%, transparent);
     color: color-mix(in srgb, var(--_muted) 65%, transparent);
   }
+}
+
+.icon-btn {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--_muted) 38%, transparent);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--_text);
+  cursor: pointer;
+  transition: border-color 0.15s ease-out, color 0.15s ease-out, background-color 0.15s ease-out;
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  &:hover {
+    border-color: var(--_primary);
+    background: color-mix(in srgb, var(--_primary) 10%, transparent);
+    color: var(--_primary);
+  }
+}
+
+.positions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .match {
