@@ -19,6 +19,14 @@ const MUTED = -1;
 const OPEN = 0;
 const STRING_NAMES = ['E', 'A', 'D', 'G', 'B', 'E'];
 const INLAYS = new Set([3, 5, 7, 9, 12, 15]);
+// Triad string sets by their highest string: 1 = strings 1–3 (G B E) … 4 = strings 4–6.
+const STRING_SETS = [1, 2, 3, 4];
+
+/** Highest string (1 = high E) of a shape on exactly three adjacent strings, else null. */
+function stringSet(frets: number[]): number | null {
+  const sounding = frets.flatMap((fret, s) => (fret === MUTED ? [] : [s]));
+  return sounding.length === 3 && sounding[2] - sounding[0] === 2 ? 6 - sounding[2] : null;
+}
 
 /** A section of the chord field the drawn chord can be appended to. */
 export interface ChordTarget {
@@ -51,6 +59,8 @@ const COPY = {
     noMatch: 'No chord in the database matches these notes',
     omitted: 'omitted',
     alternatives: 'Possible readings',
+    stringSet: 'String set',
+    stringSetLabel: (top: number) => `Triad on strings ${top} to ${top + 2}`,
     exact: (n: number, total: number) => `Database position ${n} of ${total}`,
     triad: (n: number, total: number, strings: string) => `Triad ${n} of ${total} · strings ${strings}`,
     custom: (positions: number, triads: number) =>
@@ -78,6 +88,8 @@ const COPY = {
     noMatch: 'Ningún acorde de la base coincide con estas notas',
     omitted: 'omitida',
     alternatives: 'Lecturas posibles',
+    stringSet: 'Juego de cuerdas',
+    stringSetLabel: (top: number) => `Tríada en las cuerdas ${top} a ${top + 2}`,
     exact: (n: number, total: number) => `Posición ${n} de ${total} de la base`,
     triad: (n: number, total: number, strings: string) => `Tríada ${n} de ${total} · cuerdas ${strings}`,
     custom: (positions: number, triads: number) =>
@@ -162,6 +174,17 @@ export class ChordIdentifier {
     const reading = this.reading();
     return !!reading && reading.positionIndex !== null && reading.positions[reading.positionIndex].triad;
   });
+  readonly stringSets = STRING_SETS;
+  // Triad positions per string set, as indexes into `shapes`.
+  readonly setTriads = computed(() => {
+    const bySet = new Map<number, number[]>(STRING_SETS.map((top) => [top, []]));
+    this.reading()?.positions.forEach((position, i) => {
+      const top = position.triad ? stringSet(position.frets) : null;
+      if (top) bySet.get(top)!.push(i);
+    });
+    return bySet;
+  });
+  readonly currentSet = computed(() => (this.isTriad() ? stringSet(this.frets()) : null));
   // "3–2–1" for a triad on the top three strings.
   readonly triadStrings = computed(() =>
     this.frets().flatMap((fret, s) => (fret === MUTED ? [] : [6 - s])).join('–'),
@@ -258,6 +281,14 @@ export class ChordIdentifier {
     if (!shapes.length) return;
     const current = this.shapeIndex() ?? (delta > 0 ? -1 : 0);
     this.frets.set([...shapes[(current + delta + shapes.length) % shapes.length]]);
+  }
+
+  // First triad on that string set; pressed again, the next one up the neck.
+  drawStringSet(top: number): void {
+    const indexes = this.setTriads().get(top) ?? [];
+    if (!indexes.length) return;
+    const at = indexes.indexOf(this.shapeIndex() ?? -1);
+    this.frets.set([...this.shapes()[indexes[(at + 1) % indexes.length]]]);
   }
 
   onBoardKey(event: KeyboardEvent): void {

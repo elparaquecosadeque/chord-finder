@@ -125,6 +125,25 @@
     </button>
     }
   </div>
+  @if (triadCount()) {
+  <div class="string-sets">
+    <span class="caption">{{ text().stringSet }}</span>
+    <div class="chips">
+      @for (top of stringSets; track top) {
+      <button
+        type="button"
+        class="chip"
+        [attr.aria-pressed]="currentSet() === top"
+        [attr.aria-label]="text().stringSetLabel(top)"
+        [disabled]="!setTriads().get(top)?.length"
+        (click)="drawStringSet(top)"
+      >
+        {{ top }}–{{ top + 2 }}
+      </button>
+      }
+    </div>
+  </div>
+  }
   @if (r.bassDropped) {
   <p class="bass-dropped">{{ text().bassDropped(r.addName) }}</p>
   }
