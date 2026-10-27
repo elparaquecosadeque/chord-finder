@@ -621,6 +621,8 @@ input[type='color'] {
 }
 
 .compact-draw {
+  // Switches stay together on the left; drawing and size sit on the right.
+  margin-inline-start: auto;
   display: inline-flex;
   align-items: center;
   gap: 6px;
