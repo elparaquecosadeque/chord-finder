@@ -32,6 +32,8 @@ export interface ChordPick {
   positionIndex: number | null;
   /** The drawn shape ("xx200x") when chords-db doesn't have it, so the host can keep it. */
   shape: string | null;
+  /** The matched position is one of chords-db's generated triads. */
+  triad: boolean;
   /** Index into `targets`; 0 when there are none (plain chord list). */
   target: number;
 }
@@ -150,16 +152,15 @@ export class ChordIdentifier {
     },
   });
   readonly reading = computed(() => this.readings()[this.readingIndex()] ?? null);
-  // What › and ‹ walk through: chords-db's positions, then close triads.
-  readonly shapes = computed(() => {
+  // What › and ‹ walk through: chords-db's positions, its close triads last.
+  readonly shapes = computed(() => this.reading()?.positions.map((position) => position.frets) ?? []);
+  readonly shapeIndex = computed(() => this.reading()?.positionIndex ?? null);
+  // Hand-written positions vs generated triads, for the caption.
+  readonly baseCount = computed(() => this.reading()?.positions.filter((position) => !position.triad).length ?? 0);
+  readonly triadCount = computed(() => this.shapes().length - this.baseCount());
+  readonly isTriad = computed(() => {
     const reading = this.reading();
-    return reading ? [...reading.positions, ...reading.triads] : [];
-  });
-  readonly shapeIndex = computed(() => {
-    const reading = this.reading();
-    if (!reading) return null;
-    if (reading.positionIndex !== null) return reading.positionIndex;
-    return reading.triadIndex !== null ? reading.positions.length + reading.triadIndex : null;
+    return !!reading && reading.positionIndex !== null && reading.positions[reading.positionIndex].triad;
   });
   // "3–2–1" for a triad on the top three strings.
   readonly triadStrings = computed(() =>
@@ -286,6 +287,7 @@ export class ChordIdentifier {
       name: reading.addName,
       positionIndex: reading.positionIndex,
       shape: reading.positionIndex === null ? shapeCode(this.frets()) : null,
+      triad: this.isTriad(),
       target: Math.max(0, this.target()),
     });
     this.added.set(this.text().added(reading.addName));

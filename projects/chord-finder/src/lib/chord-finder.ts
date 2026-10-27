@@ -25,6 +25,7 @@ import { ChordService } from './services/chord.service';
 import { FavoriteQualitiesService } from './services/favorite-qualities.service';
 
 const SHOW_NOTES_KEY = 'chord-finder-show-notes';
+const SHOW_TRIADS_KEY = 'chord-finder-show-triads';
 const COMPACT_SIZE_KEY = 'chord-finder-compact-size';
 // Diagram width range (px) for compact mode's size slider.
 export const COMPACT_SIZE_MIN = 90;
@@ -40,9 +41,9 @@ function loadCompactSize(): number {
   }
 }
 
-function loadShowNotes(): boolean {
+function loadFlag(key: string): boolean {
   try {
-    return localStorage.getItem(SHOW_NOTES_KEY) === 'true';
+    return localStorage.getItem(key) === 'true';
   } catch {
     return false;
   }
@@ -55,6 +56,7 @@ export interface ChordFinderCopy {
   descriptionEnd: string;
   inputLabel: string;
   showNotes: string;
+  showTriads: string;
   diagramSize: string;
   exportPng: string;
   drawChord: string;
@@ -94,6 +96,7 @@ const COPY: Record<Language, ChordFinderCopy> = {
     descriptionEnd: 'separated by commas. Sharps and flats are supported:',
     inputLabel: 'Chords',
     showNotes: 'Show notes',
+    showTriads: 'Show triads',
     diagramSize: 'Diagram size',
     exportPng: 'Export PNG',
     drawChord: 'Draw chord',
@@ -132,6 +135,7 @@ const COPY: Record<Language, ChordFinderCopy> = {
     descriptionEnd: 'separados por coma. Soporta sostenidos y bemoles:',
     inputLabel: 'Acordes',
     showNotes: 'Mostrar notas',
+    showTriads: 'Mostrar tríadas',
     diagramSize: 'Tamaño de los diagramas',
     exportPng: 'Exportar PNG',
     drawChord: 'Dibujar acorde',
@@ -192,7 +196,9 @@ export class ChordFinderComponent {
   readonly compactSizeMax = COMPACT_SIZE_MAX;
   // Global — one switch for every diagram on the page, not per-card.
   // Persisted across sessions (see onShowNotesChange below).
-  showNotes = signal(loadShowNotes());
+  showNotes = signal(loadFlag(SHOW_NOTES_KEY));
+  // Off: only chords-db's hand-written positions; on: its generated close triads too.
+  showTriads = signal(loadFlag(SHOW_TRIADS_KEY));
   results = signal<ChordSearchResult[]>([]);
   sections = signal<ChordSection[]>([]);
   inputMode = signal<'plain' | 'sections'>('plain');
@@ -546,6 +552,16 @@ export class ChordFinderComponent {
     }
   }
 
+  setShowTriads(checked: boolean): void {
+    this.showTriads.set(checked);
+    try {
+      localStorage.setItem(SHOW_TRIADS_KEY, String(checked));
+    } catch {
+      // localStorage unavailable — preference just won't persist.
+    }
+    this.runSearch();
+  }
+
   onQueryChange(value: string): void {
     this.query.set(value);
     this.runSearch();
@@ -559,6 +575,7 @@ export class ChordFinderComponent {
       const { sections, error } = this.chordService.searchSections(
         query,
         language,
+        { triads: this.showTriads() },
       );
       this.inputError.set(error);
       this.sections.set(sections);
@@ -573,7 +590,7 @@ export class ChordFinderComponent {
     } else {
       this.inputMode.set('plain');
       this.inputError.set(null);
-      const results = this.chordService.search(query, language);
+      const results = this.chordService.search(query, language, { triads: this.showTriads() });
       this.results.set(results);
       this.sections.set([]);
       for (const result of results) {
@@ -692,6 +709,8 @@ export class ChordFinderComponent {
   // the token ("Em[xx200x]"), which ChordService puts first.
   onChordPicked(pick: ChordPick): void {
     const token = pick.shape ? `${pick.name}[${pick.shape}]` : pick.name;
+    // A triad is only among the positions with triads shown, so show them.
+    if (pick.triad && !this.showTriads()) this.setShowTriads(true);
     const sections = this.sections();
     const toSection = this.inputMode() === 'sections' && sections.length > 0;
     const trimmed = this.query().trim().replace(/[,;]\s*$/, '');

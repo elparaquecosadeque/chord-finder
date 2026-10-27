@@ -84,4 +84,13 @@ describe('ChordService', () => {
     expect(result.positions[0]).toMatchObject({ frets: [-1, -1, -1, 3, 2, 1], baseFret: 7 });
     expect(service.search('Em[xxxccc]')[0].positions[0]).toMatchObject({ frets: [-1, -1, -1, 1, 1, 1], baseFret: 12 });
   });
+
+  it('leaves chords-db triads out unless asked for', () => {
+    const [base] = service.search('Em');
+    const [all] = service.search('Em', 'en', { triads: true });
+    expect(base.positions.some((p) => p.triad)).toBe(false);
+    expect(all.positions.slice(0, base.positions.length)).toEqual(base.positions);
+    expect(all.positions.length).toBeGreaterThan(base.positions.length);
+    expect(service.qualityCatalog('E').every((c) => c.positions.every((p) => !p.triad))).toBe(true);
+  });
 });

@@ -56,6 +56,10 @@ const ERROR_COPY = {
 
 // A drawn shape riding on a chord token, in chords-db's own notation (x = muted,
 // a–f = frets 10–15), low E first: "Em[xx200x]". The card shows it as position 1.
+export interface SearchOptions {
+  triads?: boolean;
+}
+
 const SHAPE_SUFFIX = /^(.*?)\[([0-9a-fx]{6})\]$/i;
 const LETTER_PC: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
 
@@ -135,15 +139,17 @@ export class ChordService {
     4: 'sus4',
   };
 
+  // `triads`: keep chords-db's generated close triads (flagged `triad`) in the positions.
   search(
     input: string,
     language: Language = 'en',
+    { triads = false }: SearchOptions = {},
   ): ChordSearchResult[] {
     return input
       .split(',')
       .map((token) => token.trim())
       .filter(Boolean)
-      .map((token, index) => this.searchSingle(token, index, language));
+      .map((token, index) => this.searchSingle(token, index, language, triads));
   }
 
   isSectionFormat(input: string): boolean {
@@ -153,6 +159,7 @@ export class ChordService {
   searchSections(
     input: string,
     language: Language = 'en',
+    { triads = false }: SearchOptions = {},
   ): { sections: ChordSection[]; error: string | null } {
     const copy = ERROR_COPY[language];
 
@@ -204,7 +211,7 @@ export class ChordService {
         name,
         results: tokens.map((token, ci) =>
           // ponytail: offset by si*10 to keep IDs unique across sections (max 6 chords × 6 sections = 36 < 60)
-          this.searchSingle(token, si * 10 + ci, language),
+          this.searchSingle(token, si * 10 + ci, language, triads),
         ),
       });
     }
@@ -220,6 +227,7 @@ export class ChordService {
     token: string,
     index: number,
     language: Language,
+    triads: boolean,
   ): ChordSearchResult {
     const shapeMatch = token.match(SHAPE_SUFFIX);
     const shape = shapeMatch ? this.shapePosition(shapeMatch[2]) : null;
@@ -266,7 +274,7 @@ export class ChordService {
       displayName: parsed.displayName,
       dbName: `${chord.key} ${chord.suffix}`,
       chord,
-      positions: shape ? [shape, ...chord.positions] : chord.positions,
+      positions: [...(shape ? [shape] : []), ...chord.positions.filter((p) => triads || !p.triad)],
       root: parsed.root,
       dbRoot: parsed.dbRoot,
     };
@@ -293,7 +301,10 @@ export class ChordService {
   qualityCatalog(dbRoot: string): ChordsDbChord[] {
     const family = this.guitarDb.chords[dbRoot];
     if (!family) return [];
-    return family.filter((c) => !c.suffix.includes('/'));
+    // Generated triads would skew the easiest-first ordering; the carousel previews hand-written shapes.
+    return family
+      .filter((c) => !c.suffix.includes('/'))
+      .map((c) => ({ ...c, positions: c.positions.filter((p) => !p.triad) }));
   }
 
   formatChordName(root: string, suffix: string): string {

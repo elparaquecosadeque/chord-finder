@@ -109,14 +109,14 @@
     </button>
     }
     <p class="match" [class.exact]="shapeIndex() !== null">
-      @if (r.positionIndex !== null) {
+      @if (isTriad()) {
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
-      {{ text().exact(r.positionIndex + 1, r.positions.length) }}
-      } @else if (r.triadIndex !== null) {
+      {{ text().triad(r.positionIndex! - baseCount() + 1, triadCount(), triadStrings()) }}
+      } @else if (r.positionIndex !== null) {
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
-      {{ text().triad(r.triadIndex + 1, r.triads.length, triadStrings()) }}
+      {{ text().exact(r.positionIndex + 1, baseCount()) }}
       } @else {
-      {{ text().custom(r.positions.length, r.triads.length) }}
+      {{ text().custom(baseCount(), triadCount()) }}
       }
     </p>
     @if (shapes().length > 1 || (shapes().length === 1 && shapeIndex() === null)) {

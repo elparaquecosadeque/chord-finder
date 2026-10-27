@@ -20,6 +20,16 @@
       <span class="track" aria-hidden="true"></span>
       {{ text().showNotes }}
     </button>
+    <button
+      type="button"
+      role="switch"
+      class="compact-switch"
+      [attr.aria-checked]="showTriads()"
+      (click)="setShowTriads(!showTriads())"
+    >
+      <span class="track" aria-hidden="true"></span>
+      {{ text().showTriads }}
+    </button>
     <button type="button" class="compact-draw" (click)="openIdentifier()">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h18M3 12h18M3 17h18M8 4v16M15 4v16" /><circle cx="11.5" cy="12" r="2.4" /></svg>
       {{ text().drawChord }}
@@ -114,6 +124,10 @@
       <label class="show-notes-toggle">
         <input type="checkbox" [checked]="showNotes()" (change)="onShowNotesChange($event)" />
         {{ text().showNotes }}
+      </label>
+      <label class="show-notes-toggle">
+        <input type="checkbox" [checked]="showTriads()" (change)="setShowTriads($any($event.target).checked)" />
+        {{ text().showTriads }}
       </label>
       <div class="action-row">
       <div class="export-wrap">

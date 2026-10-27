@@ -7,6 +7,8 @@ export interface ChordsDbPosition {
   capo?: boolean;
   baseFret?: number;
   midi?: number[];
+  // Generated close-position triad (chords-db 1.2+), listed after the hand-written ones.
+  triad?: boolean;
 }
 
 export interface ChordsDbChord {

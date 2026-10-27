@@ -18,21 +18,28 @@ describe('identifyChord', () => {
 
   it('lists the db positions as absolute frets, ready to draw', () => {
     const [best] = identifyChord([-1, 3, 2, 0, 1, 0]);
-    expect(best.positions[0]).toEqual([-1, 3, 2, 0, 1, 0]);
-    expect(best.positions[1]).toEqual([-1, 3, 5, 5, 5, 3]);
+    expect(best.positions[0]).toEqual({ frets: [-1, 3, 2, 0, 1, 0], triad: false });
+    expect(best.positions[1].frets).toEqual([-1, 3, 5, 5, 5, 3]);
   });
 
-  it('finds close-position triads chords-db does not have', () => {
-    for (const shape of [[-1, -1, -1, 9, 8, 7], [-1, 7, 5, 4, -1, -1]]) {
+  it('matches close-position triads, which chords-db lists after its own positions', () => {
+    for (const shape of [[-1, -1, -1, 9, 8, 7], [-1, 7, 5, 4, -1, -1], [-1, -1, 2, 0, 0, -1]]) {
       const [best] = identifyChord(shape);
       expect(best.name).toBe('Em');
-      expect(best.positionIndex).toBeNull();
-      expect(best.triads[best.triadIndex!]).toEqual(shape);
+      expect(best.positions[best.positionIndex!]).toEqual({ frets: shape, triad: true });
     }
   });
 
+  it('files an inverted triad under its chord, keeping the bass in the shape', () => {
+    const [best] = identifyChord([-1, -1, -1, 12, 12, 12]); // G B E
+    expect(best.name).toBe('Em/G');
+    expect(best.addName).toBe('Em');
+    expect(best.bassDropped).toBe(false);
+    expect(best.positions[best.positionIndex!].triad).toBe(true);
+  });
+
   it('has no triads for chords of more than three notes', () => {
-    expect(identifyChord([-1, 3, 2, 3, 1, 0])[0].triads).toEqual([]); // C7
+    expect(identifyChord([-1, 3, 2, 3, 1, 0])[0].positions.some((p) => p.triad)).toBe(false); // C7
   });
 
   it('matches a barre shape above the first fret (chords-db stores it relative to baseFret)', () => {
