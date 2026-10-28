@@ -79,7 +79,9 @@
 </div>
 
 <div class="readout" aria-live="polite">
-  @if (sounding() < 2) {
+  @if (pristine()) {
+  <p class="prompt">{{ text().start }}</p>
+  } @else if (sounding() < 2) {
   <p class="prompt">{{ text().prompt }}</p>
   } @else if (reading(); as r) {
   <div class="reading">

@@ -55,6 +55,7 @@ const COPY = {
     muted: 'muted',
     leftHanded: 'Left-handed',
     clear: 'Clear',
+    start: 'Mark notes on the fretboard to find the chord.',
     prompt: 'A chord needs at least two strings ringing — unmute one with ×.',
     noMatch: 'No chord in the database matches these notes',
     omitted: 'omitted',
@@ -84,6 +85,7 @@ const COPY = {
     muted: 'apagada',
     leftHanded: 'Zurdo',
     clear: 'Limpiar',
+    start: 'Marca notas en el mástil para identificar el acorde.',
     prompt: 'Un acorde necesita al menos dos cuerdas sonando — reactiva una con ×.',
     noMatch: 'Ningún acorde de la base coincide con estas notas',
     omitted: 'omitida',
@@ -154,7 +156,9 @@ export class ChordIdentifier {
   readonly showDegrees = signal(loadFlag(SHOW_DEGREES_KEY, true));
   // Light up every place the chord's notes fall on the neck, not just the drawn ones.
   readonly highlight = signal(loadFlag(HIGHLIGHT_KEY, false));
-  readonly readings = computed(() => identifyChord(this.frets()));
+  readonly pristine = computed(() => this.frets().every((fret) => fret === OPEN));
+  // Nothing to read until the board is touched: six open strings would read as G6/9/E.
+  readonly readings = computed(() => (this.pristine() ? [] : identifyChord(this.frets())));
   // Keep the chosen reading (by name) while the shape changes and it still applies.
   readonly readingIndex = linkedSignal<ReturnType<typeof identifyChord>, number>({
     source: this.readings,
@@ -190,7 +194,6 @@ export class ChordIdentifier {
     this.frets().flatMap((fret, s) => (fret === MUTED ? [] : [6 - s])).join('–'),
   );
   readonly sounding = computed(() => this.frets().filter((fret) => fret !== MUTED).length);
-  readonly pristine = computed(() => this.frets().every((fret) => fret === OPEN));
   readonly noteNames = computed(() =>
     [...new Set(this.frets().flatMap((fret, s) => (fret === MUTED ? [] : [NOTE_NAMES[(STANDARD_TUNING[s] + fret) % 12]])))],
   );
