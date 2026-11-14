@@ -124,9 +124,11 @@
         placeholder="C, F#, C#m, Bb"
         autocomplete="off"
       />
-      <app-toggle-switch [checked]="showNotes()" [label]="text().showNotes" (toggled)="setShowNotes($event)" />
-      <app-toggle-switch [checked]="showTriads()" [label]="text().showTriads" (toggled)="setShowTriads($event)" />
-      <div class="action-row">
+      <div class="controls-row">
+      <div class="toggles-row">
+        <app-toggle-switch [checked]="showNotes()" [label]="text().showNotes" (toggled)="setShowNotes($event)" />
+        <app-toggle-switch [checked]="showTriads()" [label]="text().showTriads" (toggled)="setShowTriads($event)" />
+      </div>
       <button type="button" class="draw-btn" (click)="openIdentifier()">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h18M3 12h18M3 17h18M8 4v16M15 4v16" /><circle cx="11.5" cy="12" r="2.4" /></svg>
         {{ text().drawChord }}

@@ -235,12 +235,19 @@ h1 {
   font-weight: 900;
 }
 
-.action-row {
+.controls-row {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
   gap: 12px;
+}
+
+.toggles-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
 }
 
 // Secondary to Export: outline, not filled.
