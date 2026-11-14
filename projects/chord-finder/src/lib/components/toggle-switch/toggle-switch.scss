@@ -1,0 +1,68 @@
+:host {
+  --_chords-surface: var(--chords-surface, #000000);
+  --_chords-muted: var(--chords-muted, #dedbff);
+  --_chords-primary: var(--chords-primary, #00fff0);
+  --_chords-border: var(--chords-border, rgba(0, 255, 240, 0.76));
+  --_chords-on-primary: var(--chords-on-primary, #000000);
+
+  display: inline-flex;
+}
+
+.toggle-switch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--_chords-muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  user-select: none;
+}
+
+.toggle-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.track {
+  position: relative;
+  display: inline-block;
+  width: 32px;
+  height: 18px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  border: 1px solid var(--_chords-border);
+  background: var(--_chords-surface);
+  transition: background-color 0.15s ease-out, border-color 0.15s ease-out;
+}
+
+.thumb {
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--_chords-muted);
+  will-change: transform;
+}
+
+.toggle-input:checked + .track {
+  border-color: var(--_chords-primary);
+  background: var(--_chords-primary);
+
+  .thumb {
+    background: var(--_chords-on-primary);
+  }
+}
+
+.toggle-input:focus-visible + .track {
+  outline: 2px solid var(--_chords-primary);
+  outline-offset: 2px;
+}

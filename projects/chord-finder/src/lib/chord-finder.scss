@@ -85,6 +85,14 @@
     inset 0 0 26px color-mix(in srgb, var(--_chords-secondary) 13%, transparent);
 }
 
+.hero-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
 h1 {
   margin: 0;
   max-width: 820px;
@@ -94,6 +102,28 @@ h1 {
   text-shadow:
     0 0 18px color-mix(in srgb, var(--_chords-primary) 80%, transparent),
     0 0 32px color-mix(in srgb, var(--_chords-secondary) 50%, transparent);
+}
+
+.export-btn-top {
+  flex-shrink: 0;
+  margin-top: 8px;
+  padding: 12px 18px;
+  color: var(--_chords-on-primary);
+  background: var(--_chords-primary);
+  border: 0;
+  border-radius: 12px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: filter 0.15s ease-out;
+
+  &:hover:not(:disabled) {
+    filter: brightness(1.1);
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
 }
 
 .description {
@@ -205,25 +235,6 @@ h1 {
   font-weight: 900;
 }
 
-.show-notes-toggle {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--_chords-muted);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  cursor: pointer;
-
-  input[type='checkbox'] {
-    accent-color: var(--_chords-primary);
-    width: 16px;
-    height: 16px;
-    cursor: pointer;
-  }
-}
-
 .action-row {
   display: flex;
   flex-wrap: wrap;
@@ -264,44 +275,26 @@ h1 {
 }
 
 .search-row button:focus-visible,
+.export-btn-top:focus-visible,
+.download-btn:focus-visible,
 .dialog-close:focus-visible {
   outline: 2px solid var(--_chords-primary);
   outline-offset: 3px;
 }
 
-.export-wrap {
+.export-body {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
+  gap: 20px;
   align-items: flex-start;
 }
 
-.export-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-
-  .chevron {
-    display: inline-block;
-    transition: transform 0.28s ease;
-  }
-
-  &.open .chevron {
-    transform: rotate(180deg);
-  }
-}
-
-.export-panel {
-  display: grid;
-  grid-template-rows: 0fr;
-  transition: grid-template-rows 0.28s ease;
-
-  &.open {
-    grid-template-rows: 1fr;
-  }
-}
-
-.export-panel-inner {
-  overflow: hidden;
+.export-preview {
+  width: 240px;
+  height: 330px;
+  flex-shrink: 0;
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
 }
 
 .export-options {
@@ -330,25 +323,6 @@ h1 {
   gap: 10px;
 }
 
-.check-label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--_chords-muted);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  cursor: pointer;
-
-  input[type='checkbox'] {
-    accent-color: var(--_chords-primary);
-    width: 16px;
-    height: 16px;
-    cursor: pointer;
-  }
-}
-
 input[type='color'] {
   width: 44px;
   height: 36px;
@@ -364,17 +338,29 @@ input[type='color'] {
   }
 }
 
-.search-row .download-btn {
+.download-btn {
+  width: fit-content;
+  padding: 12px 18px;
+  color: var(--_chords-on-primary);
   background: var(--_chords-secondary);
+  border: 0;
+  border-radius: 12px;
+  font-weight: 900;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
 }
 
-.search-row .download-section-btn {
+.download-section-btn {
   background: transparent;
   color: var(--_chords-text);
   border: 2px solid var(--_chords-primary);
 }
 
-.search-row .download-individual-btn {
+.download-individual-btn {
   background: var(--_chords-highlight);
   color: var(--_chords-background);
 }
@@ -647,9 +633,8 @@ input[type='color'] {
 
 // ---- Chord identifier dialog ----
 
-.identifier-dialog {
-  width: min(980px, calc(100vw - 32px));
-  max-width: none;
+.identifier-dialog,
+.export-dialog {
   max-height: calc(100dvh - 32px);
   padding: 0;
   border: 1px solid var(--_chords-border);
@@ -669,6 +654,16 @@ input[type='color'] {
     background: rgba(2, 0, 8, 0.72);
     backdrop-filter: blur(6px);
   }
+}
+
+.identifier-dialog {
+  width: min(980px, calc(100vw - 32px));
+  max-width: none;
+}
+
+.export-dialog {
+  width: min(560px, calc(100vw - 32px));
+  max-width: none;
 }
 
 @keyframes dialog-in {
@@ -726,7 +721,8 @@ input[type='color'] {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .identifier-dialog[open] {
+  .identifier-dialog[open],
+  .export-dialog[open] {
     animation: none;
   }
 }

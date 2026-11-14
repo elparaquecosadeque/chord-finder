@@ -1,6 +1,19 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  ElementRef,
+  computed,
+  effect,
+  inject,
+  input,
+  output,
+  viewChild,
+} from '@angular/core';
+import gsap from 'gsap';
 import type { ChordFinderCopy } from '../../chord-finder';
 import { ChordSearchResult, ChordsDbChord, ChordsDbPosition } from '../../models/chord.model';
+import { motionDuration } from '../../reduced-motion';
 import { ChordDiagram } from '../chord-diagram/chord-diagram';
 
 // One result card: the normal diagram + position stepper, or — while catalogOpen —
@@ -52,4 +65,28 @@ export class ResultCard {
   readonly previewPosition = computed<ChordsDbPosition | null>(
     () => this.previewEntry()?.positions[0] ?? null,
   );
+
+  // Angular's @if/@else-if swaps this whole block's DOM outright (position
+  // step, catalog open/close) — ponytail: a true crossfade would need
+  // buffering the outgoing content outside these inputs just to animate its
+  // exit, not worth it here. Fading the new content in is the honest version
+  // of "smooth transition" for an instant swap.
+  private readonly body = viewChild<ElementRef<HTMLElement>>('body');
+  private bodyTween: gsap.core.Tween | null = null;
+
+  constructor() {
+    effect(() => {
+      this.catalogOpen();
+      this.positionIndex();
+      const el = this.body()?.nativeElement;
+      if (!el) return;
+      this.bodyTween?.kill();
+      this.bodyTween = gsap.fromTo(
+        el,
+        { opacity: 0 },
+        { opacity: 1, duration: motionDuration(0.22), ease: 'power1.out' },
+      );
+    });
+    inject(DestroyRef).onDestroy(() => this.bodyTween?.kill());
+  }
 }
