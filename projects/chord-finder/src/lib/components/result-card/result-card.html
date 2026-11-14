@@ -1,7 +1,6 @@
 <article class="result-card" [class.has-error]="result().error">
   <header class="result-header">
     <div>
-      <p class="result-label">{{ text().chord }}</p>
       <div class="result-title">
         <h2>{{ result().displayName }}</h2>
         @if (!catalogOpen() && !result().error && catalog().length > 0) {
@@ -16,6 +15,7 @@
     </div>
   </header>
 
+  <div #body class="card-body">
   @if (result().error) {
     <p class="error-text">{{ result().error }}</p>
   } @else if (catalogOpen()) {
@@ -87,4 +87,5 @@
       </div>
     }
   }
+  </div>
 </article>

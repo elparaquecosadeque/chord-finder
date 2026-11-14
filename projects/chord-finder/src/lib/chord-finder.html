@@ -100,7 +100,12 @@
 <main class="page-shell">
   <div class="hero-row">
   <section class="hero-card">
-    <h1>{{ text().title }}</h1>
+    <div class="hero-head">
+      <h1>{{ text().title }}</h1>
+      <button type="button" class="export-btn-top" [disabled]="!hasResults()" (click)="openExport()">
+        {{ text().exportPng }}
+      </button>
+    </div>
 
     <p class="description">
       {{ text().descriptionStart }}
@@ -110,86 +115,18 @@
     </p>
 
     <div class="search-row">
-      <label for="chordInput">{{ text().inputLabel }}</label>
       <input
         id="chordInput"
         type="text"
+        [attr.aria-label]="text().inputLabel"
         [ngModel]="query()"
         (ngModelChange)="onQueryChange($event)"
         placeholder="C, F#, C#m, Bb"
         autocomplete="off"
       />
-      <label class="show-notes-toggle">
-        <input type="checkbox" [checked]="showNotes()" (change)="onShowNotesChange($event)" />
-        {{ text().showNotes }}
-      </label>
-      <label class="show-notes-toggle">
-        <input type="checkbox" [checked]="showTriads()" (change)="setShowTriads($any($event.target).checked)" />
-        {{ text().showTriads }}
-      </label>
+      <app-toggle-switch [checked]="showNotes()" [label]="text().showNotes" (toggled)="setShowNotes($event)" />
+      <app-toggle-switch [checked]="showTriads()" [label]="text().showTriads" (toggled)="setShowTriads($event)" />
       <div class="action-row">
-      <div class="export-wrap">
-        <button
-          type="button"
-          class="export-btn"
-          (click)="exportPanelOpen.set(!exportPanelOpen())"
-          [disabled]="!hasResults()"
-          [class.open]="exportPanelOpen()"
-        >
-          {{ text().exportPng }}
-          <span class="chevron" aria-hidden="true">▾</span>
-        </button>
-        <div class="export-panel" [class.open]="exportPanelOpen()">
-          <div class="export-panel-inner">
-            <div class="export-options">
-              <label class="color-opt">
-                <span>{{ text().bgColor }}</span>
-                <div class="color-row">
-                  <input
-                    type="color"
-                    [(ngModel)]="exportBgColor"
-                    [disabled]="exportTransparent"
-                  />
-                  <label class="check-label">
-                    <input type="checkbox" [(ngModel)]="exportTransparent" />
-                    {{ text().transparent }}
-                  </label>
-                </div>
-              </label>
-              <label class="color-opt">
-                <span>{{ text().lineColor }}</span>
-                <input type="color" [(ngModel)]="exportLineColor" />
-              </label>
-              <button
-                type="button"
-                class="download-btn"
-                (click)="exportCombined()"
-                [disabled]="!hasResults()"
-              >
-                {{ text().download }}
-              </button>
-              @if (inputMode() === 'sections') {
-              <button
-                type="button"
-                class="download-btn download-section-btn"
-                (click)="exportBySection()"
-                [disabled]="!hasResults()"
-              >
-                {{ text().downloadBySection }}
-              </button>
-              }
-              <button
-                type="button"
-                class="download-btn download-individual-btn"
-                (click)="exportIndividual()"
-                [disabled]="!hasResults()"
-              >
-                {{ text().downloadIndividual }}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
       <button type="button" class="draw-btn" (click)="openIdentifier()">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h18M3 12h18M3 17h18M8 4v16M15 4v16" /><circle cx="11.5" cy="12" r="2.4" /></svg>
         {{ text().drawChord }}
@@ -282,11 +219,12 @@
   class="identifier-dialog"
   [attr.aria-label]="text().drawChord"
   (click)="onIdentifierDialogClick($event)"
+  (cancel)="$event.preventDefault(); closeIdentifier()"
 >
   <div class="dialog-inner">
     <div class="dialog-head">
       <h2>{{ text().drawChord }}</h2>
-      <button type="button" class="dialog-close" [attr.aria-label]="text().close" (click)="identifierDialog.close()">
+      <button type="button" class="dialog-close" [attr.aria-label]="text().close" (click)="closeIdentifier()">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
       </button>
     </div>
@@ -295,5 +233,68 @@
       [targets]="identifierTargets()"
       (pick)="onChordPicked($event)"
     />
+  </div>
+</dialog>
+
+<dialog
+  #exportDialog
+  class="export-dialog"
+  [attr.aria-label]="text().exportPng"
+  (click)="onExportDialogClick($event)"
+  (cancel)="$event.preventDefault(); closeExport()"
+>
+  <div class="dialog-inner">
+    <div class="dialog-head">
+      <h2>{{ text().exportPng }}</h2>
+      <button type="button" class="dialog-close" [attr.aria-label]="text().close" (click)="closeExport()">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+      </button>
+    </div>
+    <div class="export-body">
+      <canvas #previewCanvas class="export-preview"></canvas>
+      <div class="export-options">
+        <label class="color-opt">
+          <span>{{ text().bgColor }}</span>
+          <div class="color-row">
+            <input
+              type="color"
+              [ngModel]="exportBgColor"
+              (ngModelChange)="exportBgColor = $event; redrawPreview()"
+              [disabled]="exportTransparent"
+            />
+            <app-toggle-switch
+              [checked]="exportTransparent"
+              [label]="text().transparent"
+              (toggled)="exportTransparent = $event; redrawPreview()"
+            />
+          </div>
+        </label>
+        <label class="color-opt">
+          <span>{{ text().lineColor }}</span>
+          <input type="color" [ngModel]="exportLineColor" (ngModelChange)="exportLineColor = $event; redrawPreview()" />
+        </label>
+        <button type="button" class="download-btn" (click)="exportCombined()" [disabled]="!hasResults()">
+          {{ text().download }}
+        </button>
+        @if (inputMode() === 'sections') {
+        <button
+          type="button"
+          class="download-btn download-section-btn"
+          (click)="exportBySection()"
+          [disabled]="!hasResults()"
+        >
+          {{ text().downloadBySection }}
+        </button>
+        }
+        <button
+          type="button"
+          class="download-btn download-individual-btn"
+          (click)="exportIndividual()"
+          [disabled]="!hasResults()"
+        >
+          {{ text().downloadIndividual }}
+        </button>
+      </div>
+    </div>
   </div>
 </dialog>

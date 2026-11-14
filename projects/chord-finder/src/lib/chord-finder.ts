@@ -1,26 +1,32 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   ElementRef,
+  afterRenderEffect,
   booleanAttribute,
   computed,
   effect,
+  inject,
   input,
   model,
   signal,
   viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import gsap from 'gsap';
 import { qualityDifficulty } from './chord-difficulty';
 import { ChordDiagram } from './components/chord-diagram/chord-diagram';
 import { ChordIdentifier, ChordPick, ChordTarget } from './components/chord-identifier/chord-identifier';
 import { ResultCard } from './components/result-card/result-card';
+import { ToggleSwitch } from './components/toggle-switch/toggle-switch';
 import {
   ChordSearchResult,
   ChordSection,
   ChordsDbChord,
   Language,
 } from './models/chord.model';
+import { motionDuration, prefersReducedMotion } from './reduced-motion';
 import { ChordService } from './services/chord.service';
 import { FavoriteQualitiesService } from './services/favorite-qualities.service';
 
@@ -172,7 +178,7 @@ const COPY: Record<Language, ChordFinderCopy> = {
 @Component({
   selector: 'the-chords-chord-finder',
   standalone: true,
-  imports: [FormsModule, ResultCard, ChordDiagram, ChordIdentifier],
+  imports: [FormsModule, ResultCard, ChordDiagram, ChordIdentifier, ToggleSwitch],
   templateUrl: './chord-finder.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './chord-finder.scss',
@@ -195,7 +201,7 @@ export class ChordFinderComponent {
   readonly compactSizeMin = COMPACT_SIZE_MIN;
   readonly compactSizeMax = COMPACT_SIZE_MAX;
   // Global — one switch for every diagram on the page, not per-card.
-  // Persisted across sessions (see onShowNotesChange below).
+  // Persisted across sessions (see setShowNotes below).
   showNotes = signal(loadFlag(SHOW_NOTES_KEY));
   // Off: only chords-db's hand-written positions; on: its generated close triads too.
   showTriads = signal(loadFlag(SHOW_TRIADS_KEY));
@@ -233,9 +239,10 @@ export class ChordFinderComponent {
 
   resultsRow = viewChild<ElementRef<HTMLElement>>('resultsRow');
   identifierDialog = viewChild<ElementRef<HTMLDialogElement>>('identifierDialog');
+  exportDialog = viewChild<ElementRef<HTMLDialogElement>>('exportDialog');
+  previewCanvas = viewChild<ElementRef<HTMLCanvasElement>>('previewCanvas');
   sectionsContainer = viewChild<ElementRef<HTMLElement>>('sectionsContainer');
 
-  exportPanelOpen = signal(false);
   exportBgColor = '#ffffff';
   exportLineColor = '#000000';
   exportTransparent = false;
@@ -245,6 +252,108 @@ export class ChordFinderComponent {
     private readonly favoriteQualities: FavoriteQualitiesService,
   ) {
     effect(() => this.runSearch(this.language()));
+
+    // Re-animates the whole result grid every time the chord list changes —
+    // ponytail: simpler than diffing which cards are actually new, and the
+    // re-animated unchanged cards are cheap/unnoticeable at this count (<20).
+    afterRenderEffect(() => {
+      this.results();
+      this.sections();
+      if (prefersReducedMotion()) return;
+      const root = this.inputMode() === 'sections'
+        ? this.sectionsContainer()?.nativeElement
+        : this.resultsRow()?.nativeElement;
+      const cards = root?.querySelectorAll('app-result-card');
+      if (!cards?.length) return;
+      gsap.from(cards, { opacity: 0, y: 14, duration: 0.3, stagger: 0.045, ease: 'power2.out' });
+    });
+
+    inject(DestroyRef).onDestroy(() => {
+      this.dialogTween?.kill();
+    });
+  }
+
+  private dialogTween: gsap.core.Tween | null = null;
+
+  // The dialogs' entrance is a plain CSS @keyframes animation on `[open]`
+  // (see chord-finder.scss) — native <dialog> just has no exit transition of
+  // its own, so this is only the missing close half, not a replacement.
+  private animateDialogClose(dialog: HTMLDialogElement | undefined): void {
+    if (!dialog) return;
+    if (prefersReducedMotion()) {
+      dialog.close();
+      return;
+    }
+    this.dialogTween?.kill();
+    this.dialogTween = gsap.to(dialog, {
+      opacity: 0,
+      y: 10,
+      scale: 0.94,
+      duration: motionDuration(0.18),
+      ease: 'power1.in',
+      onComplete: () => {
+        dialog.close();
+        gsap.set(dialog, { clearProps: 'opacity,transform' });
+      },
+    });
+  }
+
+  closeIdentifier(): void {
+    this.animateDialogClose(this.identifierDialog()?.nativeElement);
+  }
+
+  openExport(): void {
+    const dialog = this.exportDialog()?.nativeElement;
+    if (!dialog) return;
+    this.dialogTween?.kill();
+    gsap.set(dialog, { clearProps: 'opacity,transform' });
+    dialog.showModal();
+    this.redrawPreview();
+  }
+
+  closeExport(): void {
+    this.animateDialogClose(this.exportDialog()?.nativeElement);
+  }
+
+  onExportDialogClick(event: MouseEvent): void {
+    if (event.target === this.exportDialog()?.nativeElement) this.closeExport();
+  }
+
+  private firstVisibleSvg(): SVGSVGElement | null {
+    const root = this.inputMode() === 'sections'
+      ? this.sectionsContainer()?.nativeElement
+      : this.resultsRow()?.nativeElement;
+    return root?.querySelector<SVGSVGElement>('svg.chord-svg') ?? null;
+  }
+
+  // Previews one representative diagram with the current export colors —
+  // not the literal combined/section/individual export, just enough to show
+  // what those colors will look like before downloading.
+  redrawPreview(): void {
+    const canvas = this.previewCanvas()?.nativeElement;
+    const svg = this.firstVisibleSvg();
+    if (!canvas || !svg) return;
+    void this.paintPreview(canvas, svg);
+  }
+
+  private async paintPreview(canvas: HTMLCanvasElement, svg: SVGSVGElement): Promise<void> {
+    const width = 240;
+    const height = 330;
+    const scale = 2;
+    canvas.width = width * scale;
+    canvas.height = height * scale;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.scale(scale, scale);
+    if (!this.exportTransparent) {
+      ctx.fillStyle = this.exportBgColor;
+      ctx.fillRect(0, 0, width, height);
+    }
+    const bg = this.exportTransparent ? 'transparent' : this.exportBgColor;
+    const fg = this.exportLineColor;
+    const fgInverse = this.exportTransparent ? '#ffffff' : this.exportBgColor;
+    await this.drawSvgToCanvas(ctx, svg, bg, fg, fgInverse, 0, 0, width, height);
   }
 
   private static readonly DOWNLOAD_STAGGER_MS = 220;
@@ -530,10 +639,6 @@ export class ChordFinderComponent {
     this.triggerDownload(canvas, filename);
   }
 
-  onShowNotesChange(event: Event): void {
-    this.setShowNotes((event.target as HTMLInputElement).checked);
-  }
-
   setCompactSize(value: number): void {
     this.compactSize.set(value);
     try {
@@ -698,13 +803,16 @@ export class ChordFinderComponent {
   // --- Chord identifier (draw a shape, add it to the progression) ---
 
   openIdentifier(): void {
-    this.identifierDialog()?.nativeElement.showModal();
+    const dialog = this.identifierDialog()?.nativeElement;
+    if (!dialog) return;
+    this.dialogTween?.kill();
+    gsap.set(dialog, { clearProps: 'opacity,transform' });
+    dialog.showModal();
   }
 
   // Clicks on the dialog itself (not its content) land on the backdrop.
   onIdentifierDialogClick(event: MouseEvent): void {
-    const dialog = this.identifierDialog()?.nativeElement;
-    if (event.target === dialog) dialog.close();
+    if (event.target === this.identifierDialog()?.nativeElement) this.closeIdentifier();
   }
 
   // Appends to the chosen section, or to the end of the field (plain list, or a

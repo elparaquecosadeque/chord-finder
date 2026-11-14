@@ -1,0 +1,5 @@
+<label class="toggle-switch">
+  <input type="checkbox" class="toggle-input" [checked]="checked()" (change)="onChange($event)" />
+  <span class="track"><span #thumb class="thumb"></span></span>
+  <span class="toggle-label">{{ label() }}</span>
+</label>
