@@ -3,7 +3,6 @@ import {
   Component,
   DestroyRef,
   ElementRef,
-  afterRenderEffect,
   booleanAttribute,
   computed,
   effect,
@@ -252,21 +251,6 @@ export class ChordFinderComponent {
     private readonly favoriteQualities: FavoriteQualitiesService,
   ) {
     effect(() => this.runSearch(this.language()));
-
-    // Re-animates the whole result grid every time the chord list changes —
-    // ponytail: simpler than diffing which cards are actually new, and the
-    // re-animated unchanged cards are cheap/unnoticeable at this count (<20).
-    afterRenderEffect(() => {
-      this.results();
-      this.sections();
-      if (prefersReducedMotion()) return;
-      const root = this.inputMode() === 'sections'
-        ? this.sectionsContainer()?.nativeElement
-        : this.resultsRow()?.nativeElement;
-      const cards = root?.querySelectorAll('app-result-card');
-      if (!cards?.length) return;
-      gsap.from(cards, { opacity: 0, y: 14, duration: 0.3, stagger: 0.045, ease: 'power2.out' });
-    });
 
     inject(DestroyRef).onDestroy(() => {
       this.dialogTween?.kill();

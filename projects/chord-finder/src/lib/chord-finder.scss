@@ -239,6 +239,7 @@ h1 {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
+  justify-content: flex-end;
   gap: 12px;
 }
 
@@ -285,30 +286,52 @@ h1 {
 .export-body {
   display: flex;
   flex-wrap: wrap;
-  gap: 20px;
+  gap: 28px;
   align-items: flex-start;
 }
 
-.export-preview {
-  width: 240px;
-  height: 330px;
+// Checkerboard shows through wherever the canvas is actually left
+// transparent (ctx.clearRect, no fill) — makes "Transparent" legible instead
+// of reading as plain black.
+.export-preview-frame {
+  display: inline-flex;
   flex-shrink: 0;
-  border-radius: 16px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+  padding: 12px;
+  border-radius: 20px;
+  border: 1px solid var(--_chords-border);
+  background-color: #15151d;
+  background-image:
+    linear-gradient(45deg, #24242f 25%, transparent 25%),
+    linear-gradient(-45deg, #24242f 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #24242f 75%),
+    linear-gradient(-45deg, transparent 75%, #24242f 75%);
+  background-size: 16px 16px;
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+  box-shadow:
+    inset 0 2px 10px rgba(0, 0, 0, 0.5),
+    0 0 20px color-mix(in srgb, var(--_chords-secondary) 22%, transparent);
 }
 
-.export-options {
+.export-preview {
+  display: block;
+  width: 220px;
+  height: 302px;
+  border-radius: 12px;
+}
+
+.export-settings {
   display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 16px;
-  padding: 14px 2px 4px;
+  flex-direction: column;
+  gap: 20px;
+  flex: 1 1 200px;
+  min-width: 200px;
+  padding-top: 4px;
 }
 
 .color-opt {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   color: var(--_chords-secondary);
   font-size: 12px;
   font-weight: 900;
@@ -320,7 +343,7 @@ h1 {
 .color-row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 input[type='color'] {
@@ -338,12 +361,18 @@ input[type='color'] {
   }
 }
 
+.export-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid color-mix(in srgb, var(--_chords-primary) 25%, transparent);
+}
+
 .download-btn {
   width: fit-content;
   padding: 12px 18px;
-  color: var(--_chords-on-primary);
-  background: var(--_chords-secondary);
-  border: 0;
   border-radius: 12px;
   font-weight: 900;
   cursor: pointer;
@@ -354,15 +383,25 @@ input[type='color'] {
   }
 }
 
-.download-section-btn {
-  background: transparent;
-  color: var(--_chords-text);
-  border: 2px solid var(--_chords-primary);
+// One clear primary action (the combined export most people want) and a
+// shared secondary treatment for the rest, instead of three unrelated
+// solid fills competing for attention.
+.download-primary {
+  color: var(--_chords-on-primary);
+  background: var(--_chords-primary);
+  border: 0;
+  box-shadow: 0 0 16px color-mix(in srgb, var(--_chords-primary) 45%, transparent);
 }
 
-.download-individual-btn {
-  background: var(--_chords-highlight);
-  color: var(--_chords-background);
+.download-secondary {
+  color: var(--_chords-text);
+  background: transparent;
+  border: 2px solid color-mix(in srgb, var(--_chords-muted) 55%, transparent);
+
+  &:hover:not(:disabled) {
+    border-color: var(--_chords-secondary);
+    color: var(--_chords-secondary);
+  }
 }
 
 .sections-container {

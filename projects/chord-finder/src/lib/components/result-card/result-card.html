@@ -15,7 +15,6 @@
     </div>
   </header>
 
-  <div #body class="card-body">
   @if (result().error) {
     <p class="error-text">{{ result().error }}</p>
   } @else if (catalogOpen()) {
@@ -87,5 +86,4 @@
       </div>
     }
   }
-  </div>
 </article>

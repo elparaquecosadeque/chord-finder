@@ -251,8 +251,10 @@
       </button>
     </div>
     <div class="export-body">
-      <canvas #previewCanvas class="export-preview"></canvas>
-      <div class="export-options">
+      <div class="export-preview-frame">
+        <canvas #previewCanvas class="export-preview"></canvas>
+      </div>
+      <div class="export-settings">
         <label class="color-opt">
           <span>{{ text().bgColor }}</span>
           <div class="color-row">
@@ -273,28 +275,30 @@
           <span>{{ text().lineColor }}</span>
           <input type="color" [ngModel]="exportLineColor" (ngModelChange)="exportLineColor = $event; redrawPreview()" />
         </label>
-        <button type="button" class="download-btn" (click)="exportCombined()" [disabled]="!hasResults()">
-          {{ text().download }}
-        </button>
-        @if (inputMode() === 'sections') {
-        <button
-          type="button"
-          class="download-btn download-section-btn"
-          (click)="exportBySection()"
-          [disabled]="!hasResults()"
-        >
-          {{ text().downloadBySection }}
-        </button>
-        }
-        <button
-          type="button"
-          class="download-btn download-individual-btn"
-          (click)="exportIndividual()"
-          [disabled]="!hasResults()"
-        >
-          {{ text().downloadIndividual }}
-        </button>
       </div>
+    </div>
+    <div class="export-actions">
+      <button type="button" class="download-btn download-primary" (click)="exportCombined()" [disabled]="!hasResults()">
+        {{ text().download }}
+      </button>
+      @if (inputMode() === 'sections') {
+      <button
+        type="button"
+        class="download-btn download-secondary"
+        (click)="exportBySection()"
+        [disabled]="!hasResults()"
+      >
+        {{ text().downloadBySection }}
+      </button>
+      }
+      <button
+        type="button"
+        class="download-btn download-secondary"
+        (click)="exportIndividual()"
+        [disabled]="!hasResults()"
+      >
+        {{ text().downloadIndividual }}
+      </button>
     </div>
   </div>
 </dialog>
